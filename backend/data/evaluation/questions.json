@@ -1,0 +1,26 @@
+[
+  {
+    "id": "q001",
+    "question": "What is Retrieval-Augmented Generation (RAG) and how does it reduce LLM hallucinations?",
+    "target_entities": ["RAG", "LLM", "Hallucinations"],
+    "ground_truth_answer": "Retrieval-Augmented Generation (RAG) combines dense vector retrieval with Generative LLMs to ground answers in external retrieved document passages, reducing hallucinations and grounding responses in evidence."
+  },
+  {
+    "id": "q002",
+    "question": "Which models and benchmarks are evaluated on GLUE dataset using BERT?",
+    "target_entities": ["GLUE", "BERT", "Model"],
+    "ground_truth_answer": "BERT is evaluated on the GLUE benchmark suite across natural language understanding tasks including sentiment analysis, question answering, and textual entailment."
+  },
+  {
+    "id": "q003",
+    "question": "How does Knowledge Graph traversal improve multi-hop entity reasoning compared to basic vector search?",
+    "target_entities": ["Knowledge Graph", "Vector Search", "Neo4j"],
+    "ground_truth_answer": "Knowledge Graph traversal explicitly models directed relationships between entities (e.g. Paper -> Cites -> Model), enabling multi-hop relational reasoning that vector similarity search alone cannot explicitly model."
+  },
+  {
+    "id": "q004",
+    "question": "What is Reciprocal Rank Fusion (RRF) and how does it merge vector ranks with graph ranks?",
+    "target_entities": ["Reciprocal Rank Fusion", "RRF", "Vector Search", "Graph Search"],
+    "ground_truth_answer": "Reciprocal Rank Fusion (RRF) scores items by summing reciprocal ranks RRF_Score = w_v / (k + rank_v) + w_g / (k + rank_g), enabling robust rank fusion across vector and graph search results."
+  }
+]

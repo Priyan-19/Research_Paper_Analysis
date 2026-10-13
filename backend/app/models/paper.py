@@ -24,6 +24,7 @@ class Paper(Base):
     filename = Column(String(255), nullable=False)
     file_path = Column(String(512), nullable=False)
     file_size_bytes = Column(Integer, nullable=False, default=0)
+    file_hash = Column(String(64), nullable=True, index=True)
     
     # Metadata fields
     title = Column(String(512), nullable=True)

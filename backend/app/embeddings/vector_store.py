@@ -45,22 +45,26 @@ class VectorStoreService:
         if not paper:
             raise ResourceNotFoundError(resource_type="Paper", resource_id=paper_id)
 
-        # Get chunks needing embedding
-        chunks_query = select(Chunk).where(Chunk.paper_id == paper_id).order_by(Chunk.chunk_index.asc())
+        # Get chunks needing embedding (skip already embedded chunks)
+        chunks_query = select(Chunk).where(
+            Chunk.paper_id == paper_id,
+            Chunk.embedding.is_(None)
+        ).order_by(Chunk.chunk_index.asc())
         result = await db.execute(chunks_query)
-        chunks = list(result.scalars().all())
+        unembedded_chunks = list(result.scalars().all())
 
-        if not chunks:
-            logger.info(f"No chunks found for paper ID: {paper_id}")
-            return 0
+        if not unembedded_chunks:
+            logger.info(f"All chunks already embedded for paper ID: {paper_id}")
+            total_query = select(func.count(Chunk.id)).where(Chunk.paper_id == paper_id)
+            return (await db.execute(total_query)).scalar() or 0
 
         embedder = get_embedding_service()
-        texts = [c.text for c in chunks]
+        texts = [c.text for c in unembedded_chunks]
 
-        logger.info(f"Generating vector embeddings for {len(texts)} chunks of paper '{paper.filename}'...")
+        logger.info(f"Generating vector embeddings for {len(texts)} unembedded chunks of paper '{paper.filename}'...")
         embeddings = embedder.embed_batch(texts)
 
-        for chunk, vec in zip(chunks, embeddings):
+        for chunk, vec in zip(unembedded_chunks, embeddings):
             chunk.embedding = vec
 
         await db.commit()

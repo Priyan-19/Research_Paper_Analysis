@@ -49,17 +49,33 @@ class PaperProcessingWorker:
         }
 
         try:
-            # 1. PDF Page Extraction
-            pages = PDFLoader.extract_pages(file_path)
-            result_summary["pages_count"] = len(pages)
-            full_text = "\n\n".join(p.text for p in pages)
+            full_text = ""
+            chunks_count = 0
 
-            # 2. Semantic Chunking
-            chunker = SemanticChunker(target_chunk_size=700, chunk_overlap=100)
-            chunks = chunker.chunk_pages(pages)
-            result_summary["chunks_count"] = len(chunks)
+            # 1. Reuse existing database chunks if DB session supplied
+            if db is not None:
+                from sqlalchemy import select
+                from app.models.paper import Chunk
+                chunks_res = await db.execute(
+                    select(Chunk).where(Chunk.paper_id == paper_id).order_by(Chunk.chunk_index.asc())
+                )
+                db_chunks = list(chunks_res.scalars().all())
+                if db_chunks:
+                    full_text = "\n\n".join(c.text for c in db_chunks)
+                    chunks_count = len(db_chunks)
 
-            # 3. Vector Embedding Generation (if DB session supplied)
+            # 2. Fallback to PDF extraction if not already in DB
+            if not full_text:
+                pages = PDFLoader.extract_pages(file_path)
+                result_summary["pages_count"] = len(pages)
+                full_text = "\n\n".join(p.text for p in pages)
+                chunker = SemanticChunker(target_chunk_size=700, chunk_overlap=100)
+                chunks = chunker.chunk_pages(pages)
+                chunks_count = len(chunks)
+
+            result_summary["chunks_count"] = chunks_count
+
+            # 3. Vector Embedding Generation (skip if already generated)
             if db is not None:
                 embedded_count = await VectorStoreService.embed_paper_chunks(db=db, paper_id=paper_id)
                 result_summary["embeddings_generated"] = embedded_count

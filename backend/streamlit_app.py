@@ -4,15 +4,22 @@ import time
 import asyncio
 import tempfile
 import json
+import warnings
+import logging
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+
+# Silence non-critical warnings and pool cleanup logs in Streamlit
+warnings.filterwarnings("ignore")
+logging.getLogger("sqlalchemy.pool").setLevel(logging.CRITICAL)
+logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 
 import requests
 # Add backend directory to sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-API_BASE_URL = "http://127.0.0.1:8000/api/v1"
+API_BASE_URL = "http://127.0.0.1:8001/api/v1"
 
 from app.core.config import settings
 from app.ingestion.pdf_loader import PDFLoader
@@ -28,13 +35,13 @@ from app.database.neo4j import neo4j_client, get_neo4j_session
 from app.database.redis import redis_client
 from app.workers.paper_processing import PaperProcessingWorker
 from app.services.paper_service import PaperService
+from app.core.exceptions import DuplicatePaperError
 
 # ==========================================
 # PAGE CONFIGURATION & MINIMAL DARK THEME
 # ==========================================
 st.set_page_config(
     page_title="LLM + Knowledge Graph Research Assistant",
-    page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -111,36 +118,67 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 _EVENT_LOOP = None
 
-def run_async(func_or_coro, *args, **kwargs):
+def get_event_loop():
     global _EVENT_LOOP
-    if _EVENT_LOOP is None or _EVENT_LOOP.is_closed():
-        _EVENT_LOOP = asyncio.new_event_loop()
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            raise RuntimeError("Loop is closed")
+        return loop
+    except RuntimeError:
+        if _EVENT_LOOP is None or _EVENT_LOOP.is_closed():
+            _EVENT_LOOP = asyncio.new_event_loop()
         asyncio.set_event_loop(_EVENT_LOOP)
-    
-    if callable(func_or_coro) and not asyncio.iscoroutine(func_or_coro):
-        coro = func_or_coro(*args, **kwargs)
-    else:
-        coro = func_or_coro
+        return _EVENT_LOOP
 
-    return _EVENT_LOOP.run_until_complete(coro)
+
+def run_async(func_or_coro, *args, **kwargs):
+    loop = get_event_loop()
+
+    async def _runner():
+        if callable(func_or_coro) and not asyncio.iscoroutine(func_or_coro):
+            return await func_or_coro(*args, **kwargs)
+        return await func_or_coro
+
+    try:
+        return loop.run_until_complete(_runner())
+    except Exception as e:
+        err_msg = str(e)
+        if "attached to a different loop" in err_msg or "Event loop is closed" in err_msg:
+            from app.database.postgres import engine
+            try:
+                loop.run_until_complete(engine.dispose())
+            except Exception:
+                pass
+            global _EVENT_LOOP
+            _EVENT_LOOP = asyncio.new_event_loop()
+            asyncio.set_event_loop(_EVENT_LOOP)
+            
+            async def _fresh_runner():
+                if callable(func_or_coro) and not asyncio.iscoroutine(func_or_coro):
+                    return await func_or_coro(*args, **kwargs)
+                return await func_or_coro
+
+            return _EVENT_LOOP.run_until_complete(_fresh_runner())
+        raise e
 
 # ==========================================
 # SIDEBAR - SYSTEM STATUS & CONFIG
 # ==========================================
 with st.sidebar:
-    st.title("🧠 Research AI Settings")
+    st.title("Research AI Settings")
     st.markdown("---")
     
     llm_provider = st.selectbox(
         "LLM Model Provider",
-        options=["Groq (Llama-3.1-70b)", "Google Gemini Cloud", "Ollama Local"],
+        options=["Groq (GPT-OSS-120b)", "Google Gemini Cloud", "Ollama Local"],
         index=0
     )
     
     top_k = st.slider("Top-K Context Evidence", min_value=1, max_value=10, value=5)
     
     st.markdown("---")
-    st.markdown("### 🗄️ Database Status")
+    st.markdown("### Database Status")
     
     # Check live DB connection status
     try:
@@ -169,9 +207,9 @@ st.markdown("""
 # MINIMAL 3 TABS ONLY
 # ==========================================
 tab_chat, tab_upload, tab_graph = st.tabs([
-    "💬 Hybrid RAG Chat",
-    "📄 Upload & Ingest PDF",
-    "🕸️ Knowledge Graph & DB Inspector"
+    "Hybrid RAG Chat",
+    "Upload & Ingest PDF",
+    "Knowledge Graph & DB Inspector"
 ])
 
 # ------------------------------------------
@@ -194,13 +232,21 @@ with tab_chat:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
             if msg.get("meta"):
-                st.caption(f"⚡ Provider: {msg['meta']['provider']} | Mode: Hybrid RAG | Execution Time: {msg['meta']['time']:.2f}s")
+                st.caption(f"Provider: {msg['meta']['provider']} | Mode: Hybrid RAG | Execution Time: {msg['meta']['time']:.2f}s")
             if msg.get("citations"):
-                with st.expander("📚 Verifiable Sources & Citations"):
+                with st.expander("Verifiable Sources & Citations"):
                     for c in msg["citations"]:
-                        sec = f" | {c.section_name}" if c.section_name else ""
-                        page = f" | Page {c.page_number}" if c.page_number else ""
-                        st.markdown(f"**[{c.citation_tag}]** `{c.paper_title}`{sec}{page}")
+                        if isinstance(c, dict):
+                            sec = f" | {c.get('section_name')}" if c.get('section_name') else ""
+                            page = f" | Page {c.get('page_number')}" if c.get('page_number') else ""
+                            tag = c.get('citation_tag', '')
+                            title = c.get('paper_title', '')
+                        else:
+                            sec = f" | {c.section_name}" if getattr(c, 'section_name', None) else ""
+                            page = f" | Page {c.page_number}" if getattr(c, 'page_number', None) else ""
+                            tag = getattr(c, 'citation_tag', '')
+                            title = getattr(c, 'paper_title', '')
+                        st.markdown(f"**[{tag}]** `{title}`{sec}{page}")
 
     if user_query := st.chat_input("Ask a research question..."):
         st.session_state.messages.append({"role": "user", "content": user_query, "citations": [], "meta": None})
@@ -223,11 +269,11 @@ with tab_chat:
                             "provider": data.get("llm_provider", "groq"),
                             "time": data.get("execution_time_seconds") or exec_time
                         }
-                        st.caption(f"⚡ Provider: {meta_info['provider']} | Mode: Hybrid RAG | Execution Time: {meta_info['time']:.2f}s")
+                        st.caption(f"Provider: {meta_info['provider']} | Mode: Hybrid RAG | Execution Time: {meta_info['time']:.2f}s")
                         
                         citations = data.get("citations", [])
                         if citations:
-                            with st.expander("📚 Verifiable Sources & Citations"):
+                            with st.expander("Verifiable Sources & Citations"):
                                 for c in citations:
                                     sec = f" | {c.get('section_name')}" if c.get('section_name') else ""
                                     page = f" | Page {c.get('page_number')}" if c.get('page_number') else ""
@@ -248,13 +294,13 @@ with tab_chat:
 # TAB 2: PDF UPLOAD & DATABASE INGESTION
 # ------------------------------------------
 with tab_upload:
-    st.markdown("### 📄 Research PDF Upload & Pipeline Ingestion")
+    st.markdown("### Research PDF Upload & Pipeline Ingestion")
     st.caption("Upload academic PDFs to parse layout, store vector embeddings in PostgreSQL, and build entity relationships in Neo4j.")
     
     uploaded_file = st.file_uploader("Select Academic PDF", type=["pdf"])
     
     if uploaded_file is not None:
-        if st.button("🚀 Process & Ingest PDF into Databases", type="primary"):
+        if st.button("Process & Ingest PDF into Databases", type="primary"):
             with st.spinner("Processing PDF: Saving chunks, generating pgvector embeddings & building Neo4j Knowledge Graph..."):
                 file_bytes = uploaded_file.getvalue()
                 filename = uploaded_file.name
@@ -279,14 +325,14 @@ with tab_upload:
                 try:
                     paper, worker_res = run_async(run_full_ingestion)
                     
-                    st.success(f"✅ Successfully ingested '{filename}' into PostgreSQL & Neo4j Knowledge Graph!")
+                    st.success(f"Successfully ingested '{filename}' into PostgreSQL & Neo4j Knowledge Graph!")
                     
                     col1, col2, col3 = st.columns(3)
                     col1.metric("Total Pages", paper.total_pages or 1)
                     col2.metric("PostgreSQL Chunks & Embeddings", worker_res.get("chunks_count", 0))
                     col3.metric("Neo4j Graph Entities", worker_res.get("graph_entities", 0))
                     
-                    st.markdown("#### 📌 Extracted Paper Metadata")
+                    st.markdown("#### Extracted Paper Metadata")
                     st.json({
                         "Paper ID": paper.id,
                         "Title": paper.title or filename,
@@ -295,11 +341,13 @@ with tab_upload:
                         "Publication Year": paper.publication_year or "N/A"
                     })
                     
+                except DuplicatePaperError as dup_err:
+                    st.warning(f"⚠️ {str(dup_err)}")
                 except Exception as e:
                     st.error(f"Error ingesting PDF into databases: {str(e)}")
 
     st.markdown("---")
-    st.markdown("### 📚 Ingested Research Papers & Database Management")
+    st.markdown("### Ingested Research Papers & Database Management")
     st.caption("View all research papers currently stored in PostgreSQL & Neo4j. Delete specific papers or reset all database records.")
     
     async def fetch_paper_list():
@@ -325,9 +373,9 @@ with tab_upload:
             for item in paper_items:
                 col_info, col_del = st.columns([4, 1])
                 with col_info:
-                    st.markdown(f"📄 **{item['title']}** (`{item['filename']}`) | {item['pages']} Pages | {item['chunks']} Chunks")
+                    st.markdown(f"**{item['title']}** (`{item['filename']}`) | {item['pages']} Pages | {item['chunks']} Chunks")
                 with col_del:
-                    if st.button(f"🗑️ Delete", key=f"del_{item['id']}"):
+                    if st.button(f"Delete", key=f"del_{item['id']}"):
                         async def do_delete(pid=item['id']):
                             async with AsyncSessionLocal() as db_session:
                                 return await PaperService.delete_paper(db_session, pid)
@@ -341,7 +389,7 @@ with tab_upload:
         st.markdown("---")
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
-            if st.button("🚨 Clear All Databases (PostgreSQL & Neo4j)", key="clear_all_dbs_btn"):
+            if st.button("Clear All Databases (PostgreSQL & Neo4j)", key="clear_all_dbs_btn"):
                 async def do_clear_all():
                     async with AsyncSessionLocal() as db_session:
                         return await PaperService.delete_all_papers(db_session)
@@ -352,7 +400,7 @@ with tab_upload:
                 except Exception as clear_err:
                     st.error(f"Error clearing databases: {str(clear_err)}")
         with col_btn2:
-            if st.button("🕸️ Clear Neo4j Knowledge Graph Only", key="clear_neo4j_btn"):
+            if st.button("Clear Neo4j Knowledge Graph Only", key="clear_neo4j_btn"):
                 async def do_clear_neo4j():
                     async with get_neo4j_session() as session:
                         await session.run("MATCH (n) DETACH DELETE n")
@@ -370,7 +418,7 @@ with tab_upload:
 # TAB 3: LIVE KNOWLEDGE GRAPH & DATABASE INSPECTOR
 # ------------------------------------------
 with tab_graph:
-    st.markdown("### 🕸️ Live Knowledge Graph & Database Inspector")
+    st.markdown("### Live Knowledge Graph & Database Inspector")
     st.caption("Inspect live entity nodes, relationship triples, and vector data structures generated from your uploaded research papers.")
     
     async def fetch_live_database_stats():
@@ -426,7 +474,7 @@ with tab_graph:
         st.markdown("---")
         
         if live_triples:
-            st.markdown("#### 📌 Live Research Entity Network (Graph Visualization)")
+            st.markdown("#### Live Research Entity Network (Graph Visualization)")
             
             # Extract unique nodes and build network plot
             all_node_names = list(set(
@@ -469,24 +517,24 @@ with tab_graph:
             )
             st.plotly_chart(fig, use_container_width=True)
             
-            st.markdown("#### 🔗 Extracted Neo4j Entity Relationship Triples")
+            st.markdown("#### Extracted Neo4j Entity Relationship Triples")
             triple_df = pd.DataFrame(live_triples)
             st.dataframe(triple_df, use_container_width=True)
             
         else:
-            st.info("ℹ️ No Knowledge Graph entity relationships found in Neo4j yet. Upload a research PDF in Tab 2 to populate the live Knowledge Graph!")
+            st.info("No Knowledge Graph entity relationships found in Neo4j yet. Upload a research PDF in Tab 2 to populate the live Knowledge Graph!")
             
     except Exception as e:
         st.warning(f"Could not load live graph stats: {str(e)}")
 
     st.markdown("---")
-    st.markdown("#### 🗄️ Backend Storage Inspection Architecture")
+    st.markdown("#### Backend Storage Inspection Architecture")
     col_pg, col_neo, col_red = st.columns(3)
     
     with col_pg:
         st.markdown("""
         <div class="card">
-            <h4>🐘 PostgreSQL + pgvector</h4>
+            <h4>PostgreSQL + pgvector</h4>
             <p><strong>Stores:</strong> Raw PDFs, metadata, text chunks & 384d vector embeddings.</p>
             <p><strong>Table:</strong> <code>chunks</code>, <code>papers</code></p>
             <p><strong>Query:</strong> Cosine similarity search using HNSW index.</p>
@@ -496,7 +544,7 @@ with tab_graph:
     with col_neo:
         st.markdown("""
         <div class="card">
-            <h4>🕸️ Neo4j Graph DB</h4>
+            <h4>Neo4j Graph DB</h4>
             <p><strong>Stores:</strong> Entities (Concepts, Methods) & directed relationship triples.</p>
             <p><strong>Labels:</strong> <code>Entity</code>, <code>Paper</code></p>
             <p><strong>Query:</strong> Cypher 1-hop traversal (<code>MATCH (n)-[r]->(m)</code>).</p>
@@ -506,7 +554,7 @@ with tab_graph:
     with col_red:
         st.markdown("""
         <div class="card">
-            <h4>⚡ Redis Cache</h4>
+            <h4>Redis Cache</h4>
             <p><strong>Stores:</strong> RAG query caches, user chat sessions & task queues.</p>
             <p><strong>Type:</strong> Key-Value store & Pub/Sub.</p>
             <p><strong>Speed:</strong> Sub-millisecond response caching.</p>

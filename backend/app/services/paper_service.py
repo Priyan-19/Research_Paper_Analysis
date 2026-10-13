@@ -1,5 +1,6 @@
 import uuid
 import shutil
+import hashlib
 from pathlib import Path
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,7 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.core.logging import logger
-from app.core.exceptions import ResourceNotFoundError, PDFProcessingError
+from app.core.exceptions import ResourceNotFoundError, PDFProcessingError, DuplicatePaperError
 from app.models.paper import Paper, Chunk, ProcessingJob, ProcessingStatus
 from app.ingestion.pdf_loader import PDFLoader
 from app.ingestion.chunker import SemanticChunker
@@ -27,7 +28,30 @@ class PaperService:
     ) -> Paper:
         """
         Saves PDF to disk, parses page content, extracts metadata, creates chunks, and persists to PostgreSQL.
+        Checks for duplicate files via SHA-256 hash and filename/size matching.
         """
+        file_size = len(file_bytes)
+        file_hash = hashlib.sha256(file_bytes).hexdigest()
+
+        # 0. Check for existing duplicate paper in DB
+        query = select(Paper).where(
+            ((Paper.file_hash == file_hash) |
+             ((Paper.filename == original_filename) & (Paper.file_size_bytes == file_size))) &
+            (Paper.status != ProcessingStatus.FAILED)
+        )
+        existing_result = await db.execute(query)
+        existing_paper = existing_result.scalars().first()
+
+        if existing_paper:
+            logger.warning(
+                f"Duplicate paper upload prevented for '{original_filename}' "
+                f"(Existing Paper ID: {existing_paper.id})"
+            )
+            raise DuplicatePaperError(
+                filename=original_filename,
+                existing_paper_id=existing_paper.id
+            )
+
         paper_id = str(uuid.uuid4())
         safe_filename = f"{paper_id}_{original_filename}"
         file_path = Path(settings.UPLOAD_DIR) / safe_filename
@@ -36,14 +60,13 @@ class PaperService:
         with open(file_path, "wb") as f:
             f.write(file_bytes)
 
-        file_size = len(file_bytes)
-
         # 2. Create Initial Paper Record
         paper = Paper(
             id=paper_id,
             filename=original_filename,
             file_path=str(file_path),
             file_size_bytes=file_size,
+            file_hash=file_hash,
             status=ProcessingStatus.PROCESSING
         )
         db.add(paper)

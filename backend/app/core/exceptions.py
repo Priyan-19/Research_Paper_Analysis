@@ -66,3 +66,19 @@ class LLMProviderError(BaseAppException):
                 "message": f"Error from LLM provider '{provider}': {message}"
             }
         )
+
+
+class DuplicatePaperError(BaseAppException):
+    """Raised when a user attempts to upload a document that has already been ingested."""
+    def __init__(self, filename: str, existing_paper_id: str):
+        message = f"Document '{filename}' has already been uploaded and processed (Paper ID: {existing_paper_id}). Duplicate uploads are not allowed."
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=message
+        )
+        self.filename = filename
+        self.existing_paper_id = existing_paper_id
+        self.message = message
+
+    def __str__(self):
+        return self.message

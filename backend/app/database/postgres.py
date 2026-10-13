@@ -1,3 +1,4 @@
+import logging
 from typing import AsyncGenerator
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
@@ -6,12 +7,17 @@ from sqlalchemy.orm import declarative_base
 from app.core.config import settings
 from app.core.logging import logger
 
+# Silence noisy pool termination warnings when switching event loops in async apps
+logging.getLogger("sqlalchemy.pool").setLevel(logging.CRITICAL)
+logging.getLogger("asyncio").setLevel(logging.CRITICAL)
+
 # Create SQLAlchemy Async Engine
 engine = create_async_engine(
     settings.get_database_url(),
     echo=settings.DEBUG,
     future=True,
     pool_pre_ping=True,
+    pool_recycle=300,
     pool_size=10,
     max_overflow=20
 )
@@ -88,4 +94,12 @@ async def init_postgres_extensions():
         logger.info("Successfully initialized PostgreSQL database tables.")
     except Exception as e:
         logger.warning(f"Could not automatically create database tables: {str(e)}")
+
+    try:
+        async with AsyncSessionLocal() as session:
+            await session.execute(text("ALTER TABLE papers ADD COLUMN IF NOT EXISTS file_hash VARCHAR(64);"))
+            await session.commit()
+            logger.info("Successfully ensured 'file_hash' column exists on 'papers' table.")
+    except Exception as e:
+        logger.warning(f"Could not automatically ensure 'file_hash' column on papers table: {str(e)}")
 

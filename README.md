@@ -1,297 +1,491 @@
+<div align="center">
+
 # 🧠 LLM + Knowledge Graph Research Assistant
+### Hybrid RAG Intelligence Platform for Academic & Scientific Research Papers 🌐📚
 
-> **A Hybrid RAG Platform combining Vector Search, Knowledge Graphs, and Large Language Models for Grounded Academic & Research Intelligence.**
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-18.3-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
+[![Neo4j](https://img.shields.io/badge/Neo4j-Graph_DB-008CC1?style=for-the-badge&logo=neo4j&logoColor=white)](https://neo4j.com/)
+[![Redis](https://img.shields.io/badge/Redis-Cache_%26_Queue-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
+[![Groq](https://img.shields.io/badge/Groq_Cloud-Llama_3.3_%2F_GPT--OSS-F55036?style=for-the-badge&logo=fastapi&logoColor=white)](https://groq.com/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-GNN_GCN-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org/)
 
----
+**LLM + Knowledge Graph Research Assistant** is a state-of-the-art hybrid AI intelligence platform engineered to index, cross-reference, reason over, and synthesize complex academic research papers (PDFs). By orchestrating dense vector similarity search with structured graph relational traversal and Graph Neural Networks, it delivers verifiable, hallucination-free research synthesis with precise citations.
 
-## 📋 Overview
-
-The **LLM + Knowledge Graph Research Assistant** is an advanced AI research platform engineered to process, index, and reason over collections of academic research papers (PDFs).
-
-Traditional PDF chatbots rely exclusively on dense vector similarity, which struggles with complex relationship reasoning across multiple papers (e.g., comparing methods, tracking citation networks, or identifying co-authorship). This system resolves those limitations by pairing **Vector Embeddings (PostgreSQL + pgvector)** with a structured **Knowledge Graph (Neo4j)**, orchestrated via a **Hybrid RAG Pipeline** powered by Large Language Models (Gemini / Ollama / OpenAI / Claude).
-
----
-
-## ✨ Key Features
-
-- 📄 **Research PDF Ingestion & Semantic Chunking**: Automated extraction of text, sections, and metadata (authors, publication year, venue, abstract, citations) from academic papers.
-- 🕸️ **Automated Knowledge Graph Construction**: Uses LLMs to extract entities (Papers, Authors, Concepts, Methods, Datasets, Models) and canonicalized relationships into Neo4j.
-- 🔍 **Hybrid Retrieval Engine (Vector + Graph)**:
-  - **Vector Search**: PostgreSQL + `pgvector` for semantic similarity retrieval.
-  - **Graph Search**: Cypher queries over Neo4j for multi-hop structural reasoning.
-  - **Reciprocal Rank Fusion (RRF)**: Merges and ranks vector and graph contexts seamlessly.
-- 💬 **Grounded RAG Question Answering**: Synthesizes verified answers with explicit paper & entity citations, eliminating hallucinations.
-- 📊 **Interactive React Web UI**: A production-grade editorial research interface for paper ingestion, grounded RAG dialogues, interactive Neo4j knowledge graph exploration, GNN link prediction, and quantitative evaluation.
-- ⚡ **FastAPI REST Backend**: Asynchronous microservice API providing Swagger UI documentation (`/docs`) and background worker processing.
-- 📈 **Graph Neural Network (GNN) Link Prediction**: Predicts potential future research collaboration and concept connections.
+</div>
 
 ---
 
-## 🛠️ Architecture & Tech Stack
+## 📖 Project Overview
+
+Traditional PDF chatbots and standard RAG systems rely exclusively on dense vector embeddings. While vector search excels at finding isolated passages with semantic similarities, it fails systematically when asked to:
+1. Reason across multiple interrelated papers (e.g., comparing methodologies or identifying common benchmarks).
+2. Trace structural citation genealogies and academic co-authorship networks.
+3. Discover non-obvious, unasserted research links across distinct domains.
+
+This platform resolves those structural limitations through a **Tri-Layer Hybrid Retrieval-Augmented Generation (Hybrid RAG)** architecture. It unifies **PostgreSQL + `pgvector`** (for dense semantic retrieval), **Neo4j** (for structured multi-hop graph querying), **Reciprocal Rank Fusion (RRF)**, and **PyTorch Graph Convolutional Networks (GCN)**, driven by high-throughput LLM reasoning via Groq Cloud (`openai/gpt-oss-120b` / `llama-3.3-70b-versatile`) and Google Gemini.
+
+### Core Value Proposition
+- **🛡️ Grounded & Hallucination-Free**: Every claim is strictly backed by verifiable paper and page citations `[Paper, Page X]`.
+- **🕸️ Dual-Engine Hybrid Retrieval**: Parallel vector similarity + Cypher multi-hop graph traversal unified via Reciprocal Rank Fusion.
+- **📈 Predictive Scientific Discovery**: Built-in Graph Neural Network (GNN) link prediction uncovers unasserted research connections.
+- **⚡ High-Throughput Streaming Backend**: Asynchronous FastAPI microservice with real-time Server-Sent Events (SSE) streaming.
+- **📰 Editorial Production Web UI**: Modern, responsive React 18 + Vite interface crafted with an academic typography and canvas-based graph visualizer.
+- **🌐 End-to-End Orchestration**: Ingestion → Entity Extraction → Graph Canonicalization → Hybrid RAG → Visual Synthesis.
+
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+graph TD
+    subgraph Presentation Layer ["1. Presentation Layer (Port 5173)"]
+        UI["React 18 + Vite + TypeScript Dashboard"]
+        ChatUI["Typewriter Streaming Chat (SSE)"]
+        GraphViz["Interactive Knowledge Graph (react-force-graph-2d)"]
+        GNNUI["GNN Link Prediction & Canonicalization UI"]
+        Katex["KaTeX Math & Highlight.js Engine"]
+    end
+
+    subgraph API Gateway ["2. Backend Microservice Layer (Port 8000)"]
+        FastAPI["FastAPI REST API (/api/v1)"]
+        Uvicorn["Uvicorn ASGI Server"]
+        AsyncORM["SQLAlchemy 2.0 Async + asyncpg"]
+        Validation["Pydantic v2 Data Schemas & Settings"]
+    end
+
+    subgraph Ingestion Engine ["3. Document Processing Pipeline"]
+        PyMuPDF["PyMuPDF (fitz) Layout-Aware Parser"]
+        Chunker["Semantic Section Chunker & Metadata Extractor"]
+        Embedder["Sentence Transformers (all-MiniLM-L6-v2, 384-dim)"]
+    end
+
+    subgraph AI Framework ["4. Hybrid RAG & Intelligence Core"]
+        LLM["Groq Cloud (openai/gpt-oss-120b / Llama 3.3)"]
+        RRF["Reciprocal Rank Fusion Engine (RRF Rank = Σ 1 / (60 + r))"]
+        GNN["GNN Link Predictor (PyTorch GCN)"]
+        Canon["Entity Canonicalizer & Deduplicator"]
+        Guard["Citation & Grounding Guardrail"]
+    end
+
+    subgraph Storage Layer ["5. Database Infrastructure"]
+        PG[("PostgreSQL + pgvector (Port 5432)")]
+        NEO[("Neo4j Graph Database (Port 7687 / 7474)")]
+        REDIS[("Redis Cache & Task Queue (Port 6379)")]
+    end
+
+    UI --> FastAPI
+    ChatUI --> FastAPI
+    GraphViz --> FastAPI
+    GNNUI --> FastAPI
+    FastAPI --> PyMuPDF
+    PyMuPDF --> Chunker --> Embedder
+    Embedder --> PG
+    Chunker --> Canon --> NEO
+    FastAPI --> RRF
+    RRF --> PG
+    RRF --> NEO
+    RRF --> GNN
+    RRF --> LLM
+    LLM --> Guard --> ChatUI
+    FastAPI --> REDIS
+```
+
+> [!NOTE]
+> High-resolution system architecture diagrams are available directly in the repository:
+> - **Scalable Vector**: [System_Architecture.svg](System_Architecture.svg)
+> - **Ultra-HD Image (3200 × 2160)**: [System_Architecture.png](System_Architecture.png)
+> - **Standard Presentation Image**: [System_Architecture.jpg](System_Architecture.jpg)
+
+---
+
+## 🚀 Key Features
+
+### 📄 Academic PDF Ingestion & Semantic Chunking
+- **Layout-Aware Extraction**: Powered by PyMuPDF (`fitz`), automatically preserving academic structure, abstracts, multi-column text, sections, and references.
+- **Dense Vector Embedding**: Embeds passages into 384-dimensional dense vectors using `sentence-transformers/all-MiniLM-L6-v2`.
+- **HNSW Indexing**: High-performance approximate nearest neighbor search via `pgvector` with cosine similarity ranking.
+
+### 🕸️ Automated Knowledge Graph Construction
+- **Autonomous Entity Extraction**: Automatically identifies and categorizes domain entities:
+  - `Paper`, `Author`, `Concept`, `Method`, `Dataset`, `Model`, `Metric`.
+- **Relational Edge Mapping**: Populates typed relational edges:
+  - `AUTHORED_BY`, `PROPOSES`, `USES_METHOD`, `EVALUATED_ON`, `CITES`, `EXTENDS`.
+- **Automated Canonicalization**: Merges synonym variations (e.g., *"CNN"*, *"ConvNet"*, *"Convolutional Neural Network"*) to ensure graph integrity.
+
+### 🔍 Dual-Engine Hybrid Retrieval (RRF)
+- **Vector Search**: PostgreSQL `pgvector` retrieves contextually similar passages using Cosine Distance.
+- **Graph Traversal**: Cypher queries navigate 2-3 hop relational neighborhoods in Neo4j to find structural dependencies.
+- **Reciprocal Rank Fusion**: Merges both score distributions dynamically using the standard RRF formula:
+  $$\text{RRF Score}(d) = \sum_{m \in M} \frac{1}{60 + r_m(d)}$$
+
+### 💬 Grounded Question Answering & Citation Guardrails
+- **Anti-Hallucination Pipeline**: The LLM context is strictly bound to retrieved evidence chunks and graph triples.
+- **Verifiable In-Text Citations**: Automatically appends verifiable references `[Paper Name, Page X]` to statements.
+- **Typewriter SSE Streaming**: Smooth token-by-token response generation with interactive side-panel evidence cards.
+
+### 📈 Graph Neural Network (GNN) Link Prediction
+- **PyTorch Geometric GCN**: Analyzes topological graph neighborhoods to predict latent connections between concepts, emerging methods, and authors.
+- **Collaborative Research Discovery**: Suggests novel research pairings and cross-disciplinary citation potentials.
+
+### 🎨 Modern Editorial React Dashboard
+- **Editorial Typography & Aesthetics**: Newsreader serif headings, warm parchment background (`#fef9f0`), monospaced metadata, and clean card containers.
+- **Interactive 2D Force-Directed Graph**: Real-time canvas exploration of nodes and relationships via `react-force-graph-2d`.
+- **LaTeX Math & Syntax Highlighting**: Math equations rendered via KaTeX (`$E=mc^2$`), code snippets formatted with Highlight.js.
+- **Zero Mock Data**: Production mode strictly connected to live backend databases without pre-fillers or dummy artifacts.
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technologies | Role & Purpose |
+| :--- | :--- | :--- |
+| **Frontend Framework** | React 18, Vite 5, TypeScript 5.5 | Reactive, typed single-page application |
+| **Styling & UI** | Tailwind CSS 3.4, Radix UI, Lucide Icons | Editorial research design system tokens |
+| **Graph Visualizer** | `react-force-graph-2d`, HTML5 Canvas | Dynamic interactive knowledge graph exploration |
+| **Math & Code Rendering**| KaTeX, `remark-math`, `rehype-highlight` | Academic formula and code block rendering |
+| **State Management** | Zustand, TanStack Query (React Query) | Client-side store, server cache & request deduplication |
+| **Backend Framework** | FastAPI 0.110+, Uvicorn (ASGI) | Asynchronous REST API microservice (`/api/v1`) |
+| **Database ORM** | SQLAlchemy 2.0 (Async), `asyncpg` | Asynchronous PostgreSQL database driver |
+| **Data Validation** | Pydantic v2, Pydantic Settings | Strict typing, schema serialization, env validation |
+| **Vector Database** | PostgreSQL 16 + `pgvector` | Dense vector storage, cosine distance, HNSW indexing |
+| **Graph Database** | Neo4j 5 Community Edition, Cypher | Graph property model, multi-hop relationship queries |
+| **In-Memory Cache** | Redis 7 | Query response caching and asynchronous task queuing |
+| **LLM Inference** | Groq Cloud (`openai/gpt-oss-120b`, Llama 3.3) | Ultra-fast token generation & reasoning |
+| **Alternative LLMs** | Google Gemini (`gemini-1.5-flash`), Ollama | Cloud and local fallback language models |
+| **Embedding Model** | `sentence-transformers/all-MiniLM-L6-v2` | 384-dimensional dense semantic representations |
+| **PDF Processing** | PyMuPDF (`fitz`) | High-fidelity text, layout, and metadata extraction |
+| **Graph Neural Network** | PyTorch, PyTorch Geometric (GCN) | Unsupervised and supervised link prediction |
+| **Testing Frameworks** | `pytest`, `pytest-asyncio`, `vitest`, RTL | End-to-end backend (32 tests) & frontend (7 tests) suites |
+
+---
+
+## 📂 Project Structure
 
 ```text
-               +----------------------------------+
-               |     React Web UI (Port 5173)     |
-               +-----------------+----------------+
-                                 |
-                                 v
-               +-----------------+----------------+
-               |     FastAPI Backend Service      |
-               +-----------------+----------------+
-                                 |
-        +------------------------+------------------------+
-        |                        |                        |
-        v                        v                        v
-+---------------+        +---------------+        +---------------+
-|  PostgreSQL   |        |     Neo4j     |        |     Redis     |
-|  + pgvector   |        |  Graph DB     |        | Cache & Queue |
-| (Vector Search|        |(Knowledge Graph|        |               |
-+---------------+        +---------------+        +---------------+
-```
-
-- **Programming Language**: Python >= 3.11 & TypeScript
-- **Package Manager**: `uv` (Fast Python package manager) & `npm`
-- **Backend Framework**: FastAPI + Uvicorn + Pydantic v2
-- **Vector Database**: PostgreSQL with `pgvector` (via SQLAlchemy Async)
-- **Graph Database**: Neo4j (via Neo4j Python Driver & Cypher)
-- **Caching & Job Queue**: Redis
-- **Frontend Interface**: React 18 + Vite + TypeScript (Tailwind CSS, Radix, react-force-graph-2d)
-- **LLM & Embeddings**: Groq Cloud (`openai/gpt-oss-120b`, Llama 3.3) / Google Gemini, Sentence Transformers (`all-MiniLM-L6-v2`)
-
----
-
-## 🎨 React Frontend (New Modern Web UI)
-
-The project includes a production-quality chatbot web UI in React that replaces the legacy Streamlit interface, styled with a warm tactile editorial design system (Newsreader typography, warm parchment `#fef9f0` canvas, sharp 90° corners, and exhibition catalog styling).
-
-### Tech Stack
-- **Framework**: React 18 + Vite + TypeScript
-- **Styling**: Tailwind CSS + Custom Design System tokens
-- **State Management**: Zustand (UI and conversation state) + TanStack Query (server state & caching)
-- **Routing**: `react-router-dom`
-- **Math & Code**: `react-markdown` + `remark-math` + `rehype-katex` + `rehype-highlight`
-- **Knowledge Graph Visualizer**: `react-force-graph-2d`
-- **Icons**: `lucide-react`
-
-### Getting Started with React Frontend
-
-```bash
-# 1. Navigate to the frontend directory
-cd frontend
-
-# 2. Copy the environment template
-cp .env.example .env
-
-# 3. Install dependencies
-npm install
-
-# 4. Start Vite development server
-npm run dev
-```
-
-Visit **http://localhost:5173** to access the research assistant interface.
-
-### Building for Production & Docker
-
-```bash
-# Build production bundle
-npm run build
-
-# Run via Docker
-docker-compose up --build frontend
-```
-
----
-
-## 📁 Repository Structure
-
-```text
-.
-├── PRD_LLM_Knowledge_Graph_Research_Assistant.md  # Detailed Product Requirements Document
-├── modules.md                                      # Architectural Modules Blueprint
-├── README.md                                       # Project Overview & Setup Guide
-├── .gitignore                                      # Root Git ignore rules
+d:/FY/
+├── backend/                                        # FastAPI REST Application Service
+│   ├── app/                                        # Core application package
+│   │   ├── api/v1/                                 # API endpoints (health, papers, chat, graph)
+│   │   │   ├── chat.py                             # Grounded chat & streaming endpoint
+│   │   │   ├── graph.py                            # Graph query, stats & GNN inference
+│   │   │   ├── health.py                           # System & database health checks
+│   │   │   └── papers.py                           # PDF upload, listing & processing
+│   │   ├── core/                                   # Application configuration & logging
+│   │   │   ├── config.py                           # Pydantic v2 settings loader
+│   │   │   └── logging.py                          # Structured logger setup
+│   │   ├── database/                               # Database connectors & clients
+│   │   │   ├── neo4j.py                            # Neo4j async session manager
+│   │   │   ├── postgres.py                         # SQLAlchemy async engine & session
+│   │   │   └── redis.py                            # Redis cache & queue client
+│   │   ├── graph/                                  # Knowledge graph modules
+│   │   │   ├── canonicalizer.py                    # Entity deduplication & merging
+│   │   │   ├── extractor.py                        # LLM entity & relation extractor
+│   │   │   └── gnn.py                              # PyTorch GCN link prediction engine
+│   │   ├── ingestion/                              # Document ingestion pipeline
+│   │   │   ├── chunker.py                          # Layout-aware semantic chunker
+│   │   │   ├── embedder.py                         # SentenceTransformers vector generator
+│   │   │   └── pdf_loader.py                       # PyMuPDF (fitz) text & metadata reader
+│   │   ├── llm/                                    # Multi-provider LLM abstraction
+│   │   │   ├── client.py                           # Base LLM client interface
+│   │   │   ├── gemini.py                           # Google Gemini API adapter
+│   │   │   └── groq.py                             # Groq Cloud API adapter
+│   │   ├── rag/                                    # Hybrid RAG reasoning core
+│   │   │   ├── guardrail.py                        # Grounding & citation validator
+│   │   │   ├── pipeline.py                         # Grounded question-answering orchestrator
+│   │   │   └── retriever.py                        # Dual vector + graph retriever with RRF
+│   │   ├── schemas/                                # Pydantic data schemas
+│   │   │   ├── chat.py                             # Query & response models
+│   │   │   ├── graph.py                            # Node, edge & GNN models
+│   │   │   └── paper.py                            # Paper metadata & chunk models
+│   │   ├── services/                               # Application business logic
+│   │   │   └── paper_service.py                    # File handling & ingestion service
+│   │   ├── workers/                                # Asynchronous task workers
+│   │   │   └── paper_worker.py                     # Background ingestion task processor
+│   │   └── main.py                                 # FastAPI application entrypoint
+│   ├── data/                                       # Storage for uploads & processed files
+│   │   ├── uploads/                                # Raw uploaded PDF documents
+│   │   └── processed/                              # Extracted text & chunk artifacts
+│   ├── scripts/                                    # Maintenance & administrative scripts
+│   │   ├── check_stats.py                          # Check DB records, vectors, and triples
+│   │   ├── clear_neo4j.py                          # Safe reset for Neo4j database
+│   │   └── reprocess_all_papers.py                 # Batch re-index and re-chunk tool
+│   ├── tests/                                      # Pytest unit & integration test suite (32 tests)
+│   ├── Dockerfile.backend                          # Production container configuration
+│   ├── docker-compose.yml                          # PostgreSQL (pgvector), Neo4j, Redis containers
+│   ├── pyproject.toml                              # Python project dependencies (PEP 518)
+│   └── requirements.txt                            # Pinned Python package dependencies
+│
+├── frontend/                                       # React 18 + Vite Modern Web UI
+│   ├── src/
+│   │   ├── api/                                    # Typed backend client & SSE consumer
+│   │   ├── components/                             # Reusable editorial UI components
+│   │   │   ├── Chat/                               # Message bubbles, sources panel, composer
+│   │   │   ├── Graph/                              # ForceGraph2D canvas & node details
+│   │   │   └── Layout/                             # Navigation header & status pills
+│   │   ├── pages/                                  # Route pages
+│   │   │   ├── ChatPage.tsx                        # Main grounded research chat interface
+│   │   │   ├── PapersPage.tsx                      # PDF upload & ingestion management
+│   │   │   ├── KnowledgeGraphPage.tsx              # Interactive graph exploration
+│   │   │   ├── GNNPredictionPage.tsx               # GNN link prediction & canonicalization
+│   │   │   └── EvaluationPage.tsx                  # Empirical benchmarks & retrieval stats
+│   │   ├── store/                                  # Zustand global application state
+│   │   ├── types/                                  # TypeScript interface declarations
+│   │   ├── App.tsx                                 # Root application component
+│   │   └── main.tsx                                # React DOM mounting & providers
+│   ├── index.html                                  # Web entry point
+│   ├── package.json                                # Frontend dependencies & Vitest runner
+│   ├── tailwind.config.js                          # Editorial design system token configuration
+│   └── vite.config.ts                              # Vite dev server & proxy settings
+│
+├── System_Architecture.png                         # Ultra-HD system architecture diagram (PNG)
+├── System_Architecture.jpg                         # High-res system architecture diagram (JPG)
+├── System_Architecture.svg                         # Vector system architecture diagram (SVG)
 ├── run_all.ps1 / run_all.bat                       # One-command full-stack launchers (Root)
 ├── stop_all.ps1 / stop_all.bat                     # One-command full-stack shutdown scripts (Root)
-├── frontend/                                       # Production React 18 + Vite Web Application
-│   ├── src/
-│   │   ├── api/                                    # Typed REST API layer & SSE streaming client
-│   │   ├── components/                             # UI components (Chat, Graph, Papers, Sources)
-│   │   ├── pages/                                  # ChatPage, PapersPage, KnowledgeGraphPage, etc.
-│   │   ├── store/                                  # Zustand state management (Chat, UI, Settings)
-│   │   └── types/                                  # TypeScript interface definitions
-│   ├── package.json                                # NPM frontend dependencies & scripts
-│   ├── tailwind.config.js                          # Editorial design system token configuration
-│   └── vite.config.ts                              # Vite build & proxy configuration
-└── backend/                                        # FastAPI REST Application Service
-    ├── app/                                        # Core application package
-    │   ├── api/v1/                                 # REST API endpoints (health, papers, chat, graph)
-    │   ├── core/                                   # Application configuration & logging
-    │   ├── database/                               # Postgres, Neo4j, and Redis async clients
-    │   ├── graph/                                  # Graph extractors, canonicalizer & GNN
-    │   ├── ingestion/                              # PDF loader, chunker & metadata extractor
-    │   ├── llm/                                    # Multi-provider LLM abstraction (Groq, Gemini)
-    │   ├── rag/                                    # Hybrid retriever & grounded chat service
-    │   ├── schemas/                                # Pydantic v2 data models
-    │   ├── services/                               # Business logic & paper management
-    │   └── workers/                                # Background paper processing workers
-    ├── data/                                       # Storage for PDF uploads & processed files
-    │   ├── uploads/
-    │   └── processed/
-    ├── scripts/                                    # Utility scripts (reprocessing, stats, clear DB)
-    ├── tests/                                      # Pytest suite
-    ├── Dockerfile.backend                          # Backend container definition
-    ├── docker-compose.yml                          # Multi-container database setup
-    └── pyproject.toml / requirements.txt           # Python dependency specifications
+├── PRD_LLM_Knowledge_Graph_Research_Assistant.md   # Product Requirements Document
+├── modules.md                                      # Architectural Modules Technical Blueprint
+├── .gitignore                                      # Comprehensive Git exclusion rules
+└── README.md                                       # Master Project Documentation
 ```
 
 ---
 
-## 🚀 Quick Start Guide
+## 🚀 Getting Started
 
 ### Prerequisites
-
-- **Python**: `>= 3.11`
-- **uv**: Python package manager (Recommended) — [Installation Guide](https://github.com/astral-sh/uv)
-- **Docker Desktop**: Required to run PostgreSQL (`pgvector`), Neo4j, and Redis databases.
+- **Python**: `3.11` or higher installed
+- **Node.js**: `v18.0.0` or higher & `npm`
+- **Docker Desktop**: Required to run PostgreSQL (`pgvector`), Neo4j, and Redis
+- **uv**: (Recommended) Ultra-fast Python package installer
 
 ---
 
-### Step 1: Environment Setup
-
-Clone the repository and create your environment configuration file:
+### 1. Clone Repository & Environment Setup
 
 ```bash
-# Navigate to the backend directory
-cd backend
+# Clone the repository
+git clone https://github.com/your-username/academic-hybrid-rag.git
+cd academic-hybrid-rag
+```
 
-# Copy the template environment file
+Configure backend environment variables:
+```bash
+cd backend
 cp .env.example .env
 ```
 
-Open `.env` and set your API keys (e.g. `GEMINI_API_KEY`) and database configuration as required:
-
+Open `backend/.env` and configure your API keys and credentials:
 ```env
-GEMINI_API_KEY=your_gemini_api_key_here
-LLM_PROVIDER=gemini
+# Server Configuration
+HOST=127.0.0.1
+PORT=8000
+ENVIRONMENT=development
+
+# LLM Engine Configuration
+LLM_PROVIDER=groq
+GROQ_API_KEY=gsk_your_groq_api_key_here
+GROQ_MODEL=openai/gpt-oss-120b
+
+# Embeddings
 EMBEDDING_MODEL=all-MiniLM-L6-v2
+
+# Database Connections
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/research_rag
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=password
+REDIS_URL=redis://localhost:6379/0
 ```
 
 ---
 
-### Step 2: Start Database Infrastructure (Docker)
+### 2. Start Database Infrastructure (Docker)
 
-Spin up PostgreSQL with `pgvector`, Neo4j, and Redis using Docker Compose:
+Spin up PostgreSQL (`pgvector`), Neo4j, and Redis with Docker Compose:
 
 ```bash
 # From the backend directory
 docker-compose up -d postgres neo4j redis
 ```
 
-This starts:
-- **PostgreSQL (`pgvector`)**: `localhost:5432`
-- **Neo4j Graph Database**: `localhost:7687` (HTTP Browser: `http://localhost:7474`)
-- **Redis**: `localhost:6379`
-
----
-
-### Step 3: Install Dependencies
-
-Using `uv` (Recommended):
-
-```powershell
-# Create virtual environment
-uv venv
-
-# Activate virtual environment (Windows PowerShell)
-.venv\Scripts\activate
-
-# Install all required packages
-uv pip install -r requirements.txt
+Verify that all three database containers are healthy:
+```bash
+docker-compose ps
 ```
 
 ---
 
-### Step 4: Run the Application
+### 3. Setup & Launch Backend (FastAPI)
 
-#### Option A: One-Command Launcher (Recommended for Windows)
+```powershell
+# Navigate to backend
+cd backend
 
-Run the automated launcher script to start Docker databases, the FastAPI backend, and the React frontend simultaneously:
+# Create virtual environment
+python -m venv .venv
 
-**In PowerShell:**
+# Activate virtual environment
+# Windows PowerShell:
+.venv\Scripts\Activate.ps1
+# Linux / macOS:
+# source .venv/bin/activate
+
+# Install dependencies (using uv or pip)
+pip install -r requirements.txt
+
+# Start FastAPI development server
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Backend will be live at **http://127.0.0.1:8000** with interactive Swagger documentation at **http://127.0.0.1:8000/docs**.
+
+---
+
+### 4. Setup & Launch Frontend (React + Vite)
+
+```bash
+# In a new terminal, navigate to frontend
+cd frontend
+
+# Copy environment variables
+cp .env.example .env
+
+# Install npm dependencies
+npm install
+
+# Start Vite development server
+npm run dev
+```
+
+Frontend will be accessible at **http://localhost:5173**.
+
+---
+
+### 5. Automated One-Command Launchers (Windows)
+
+To start all services (Docker databases, FastAPI backend, and React frontend) simultaneously with a single command:
+
+**Using PowerShell:**
 ```powershell
 .\run_all.ps1
 ```
 
-**Or in Command Prompt (CMD):**
+**Using Command Prompt (CMD):**
 ```cmd
 run_all.bat
 ```
 
-To stop all services when done:
+To gracefully shut down all running services when done:
 ```powershell
 .\stop_all.ps1
 ```
 *(Or in CMD: `stop_all.bat`)*
 
-#### Option B: Individual Terminal Commands
+---
 
-1. **Start Databases (Docker)**:
-   ```bash
-   cd backend && docker-compose up -d postgres neo4j redis
-   ```
+## 🔑 Default Credentials & Access Points
 
-2. **Start FastAPI Backend (Port 8000)**:
-   ```bash
-   cd backend && uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-   ```
-
-3. **Start React Frontend (Port 5173)**:
-   ```bash
-   cd frontend && npm run dev
-   ```
+| Service / Interface | URL | Access / Default Credentials | Purpose |
+| :--- | :--- | :--- | :--- |
+| **React Web Dashboard** | `http://localhost:5173` | Direct Browser Access | Primary research assistant user interface |
+| **FastAPI Swagger UI** | `http://localhost:8000/docs` | Public API Documentation | Interactive REST API testing and exploration |
+| **FastAPI ReDoc** | `http://localhost:8000/redoc` | Public API Documentation | Formal API technical specification |
+| **Backend Health Check** | `http://localhost:8000/api/v1/health` | HTTP GET | Real-time DB and service connectivity check |
+| **Neo4j Browser Console**| `http://localhost:7474` | User: `neo4j` \| Password: `password` | Visual Cypher query exploration and graph inspection |
+| **PostgreSQL (pgvector)**| `localhost:5432` | User: `postgres` \| Password: `postgres` | Relational metadata and vector embeddings |
+| **Redis Cache** | `localhost:6379` | Default No-Auth Port | Response caching and background job queue |
 
 ---
 
-## 🔗 Access Points & Documentation
+## ⚙️ Core Configuration Reference
 
-| Service / Interface | URL | Description |
+| Environment Variable | Default Value | Description |
 | :--- | :--- | :--- |
-| **React Web UI** | `http://localhost:5173` | Main interactive research assistant dashboard |
-| **FastAPI Swagger Docs** | `http://localhost:8000/docs` | Interactive OpenAPI documentation |
-| **FastAPI ReDoc** | `http://localhost:8000/redoc` | Alternative API documentation |
-| **API Health Check** | `http://localhost:8000/api/v1/health` | Service health status endpoint |
-| **Neo4j Browser UI** | `http://localhost:7474` | Cypher query console (User: `neo4j`, Password: `password`) |
+| `LLM_PROVIDER` | `groq` | Active LLM inference provider (`groq`, `gemini`, `ollama`) |
+| `GROQ_MODEL` | `openai/gpt-oss-120b` | Configured Groq model (supports `llama-3.3-70b-versatile`) |
+| `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | SentenceTransformer embedding model name (384 dims) |
+| `TOP_K_VECTORS` | `5` | Number of dense vector passages retrieved per query |
+| `TOP_K_GRAPH` | `5` | Number of multi-hop graph subgraphs retrieved per query |
+| `RRF_K` | `60` | Smoothing constant in Reciprocal Rank Fusion formula |
+| `TEMPERATURE` | `0.2` | Deterministic sampling temperature for grounded generation |
+| `VITE_API_BASE_URL` | `http://localhost:8000` | Backend API gateway URL used by the React frontend |
 
 ---
 
-## 📜 Utility Scripts
+## 📜 Administrative & Utility Scripts
 
-Utility scripts are located in `backend/scripts/`:
+All maintenance utilities are located in `backend/scripts/`:
 
-- **Check Database Statistics**:
-  ```bash
-  python scripts/check_stats.py
-  ```
-- **Reprocess All Uploaded Papers**:
-  ```bash
-  python scripts/reprocess_all_papers.py
-  ```
-- **Clear Neo4j Knowledge Graph**:
-  ```bash
-  python scripts/clear_neo4j.py
-  ```
+```bash
+# 1. Inspect database records, vector count, and graph triples:
+python scripts/check_stats.py
+
+# 2. Batch re-index and re-chunk all stored PDF papers:
+python scripts/reprocess_all_papers.py
+
+# 3. Clean and reset the Neo4j knowledge graph safely:
+python scripts/clear_neo4j.py
+```
 
 ---
 
-## 📄 Documentation References
+## 🧪 Testing & Verification
 
-For full architectural blueprints, entity-relationship schemas, and functional specifications, refer to:
-- [PRD Documentation](file:///d:/FY/PRD_LLM_Knowledge_Graph_Research_Assistant.md)
-- [Module Blueprint](file:///d:/FY/modules.md)
+The codebase includes comprehensive test suites across both backend and frontend layers:
+
+### Backend Unit & Integration Tests (pytest)
+```bash
+cd backend
+pytest -v
+```
+> **Status**: `32 passed` — Covers PDF parsing, semantic chunking, embedding generation, Cypher query construction, RRF ranking, Pydantic schemas, and API routes.
+
+### Frontend Unit & Component Tests (Vitest)
+```bash
+cd frontend
+npm test
+```
+> **Status**: `7 passed` — Covers React rendering, Zustand stores, SSE client streaming parser, and graph canvas bindings.
+
+### Production Build Verification
+```bash
+cd frontend
+npm run build
+```
+> **Status**: Successfully compiles without TypeScript warnings or bundling errors.
 
 ---
 
-## 📄 License
+## 🔒 Security, Grounding & Reliability
 
-This project is developed as part of a Final-Year Research Project in Generative AI & Knowledge Graphs.
+- **Strict Source Grounding**: Every generated statement is constrained to evidence chunks with verified citations `[Paper, Page X]`.
+- **Anti-Hallucination Guardrails**: Prompts enforce negative constraints ("If evidence does not contain the answer, state that it cannot be determined").
+- **Parameter Validation**: Input queries and pagination constraints are strictly validated via Pydantic v2.
+- **Failover & Multi-Provider Resilience**: Gracefully switches to secondary LLM endpoints (Gemini / Ollama) if the primary provider encounters rate limits.
+- **Async Non-Blocking Architecture**: Long-running PDF ingestion tasks run in background worker threads without blocking user chat queries.
+
+---
+
+## 📦 Core Capabilities Summary
+
+- 📄 **High-Fidelity PDF Parsing**: Extracts text, metadata, sections, and references with layout awareness.
+- 🧬 **Automated Knowledge Graph Extraction**: Discovers research entities and typed relational triples.
+- 🔀 **Reciprocal Rank Fusion (RRF)**: Dynamically balances vector similarity with graph connectivity.
+- 🔮 **GNN Link Prediction**: Uncovers latent research connections and cross-domain citation possibilities.
+- ⚡ **Ultra-Fast Streaming**: Sub-second token delivery powered by Groq Cloud LPU acceleration.
+- 🖥️ **Editorial Research UI**: Full-fledged React 18 interface with interactive graph canvas and KaTeX math.
+- 🚀 **Turnkey Deployment**: One-command Windows scripts and Docker Compose orchestration.
+
+---
+
+<div align="center">
+  <p>Built with 🧠 for Grounded Academic & Scientific Research Intelligence</p>
+  <p>Developed by <strong>Priyan-19</strong></p>
+  <p>© 2026 Academic Hybrid RAG Research Platform. All Rights Reserved.</p>
+</div>

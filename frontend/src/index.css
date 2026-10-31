@@ -1,0 +1,184 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-surface: #fef9f0;
+    --bg-surface-dim: #ded9d1;
+    --bg-surface-bright: #fef9f0;
+    --bg-container-lowest: #ffffff;
+    --bg-container-low: #f8f3ea;
+    --bg-container: #f2ede4;
+    --bg-container-high: #ece8df;
+    --bg-container-highest: #e7e2d9;
+    --text-primary: #1d1c16;
+    --text-muted: #4c4540;
+    --border-outline: #cfc5bd;
+    --border-hairline: #e7e2d9;
+    --color-primary: #24201c;
+    --color-primary-container: #3a3531;
+    --color-secondary: #6b5c4d;
+    --color-secondary-container: #f1dcc9;
+    --color-tertiary: #281f11;
+  }
+
+  .dark {
+    --bg-surface: #191714;
+    --bg-surface-dim: #13110f;
+    --bg-surface-bright: #201e1a;
+    --bg-container-lowest: #100f0d;
+    --bg-container-low: #1e1b17;
+    --bg-container: #24211d;
+    --bg-container-high: #2a2722;
+    --bg-container-highest: #322e28;
+    --text-primary: #ede7dd;
+    --text-muted: #9e958a;
+    --border-outline: #474138;
+    --border-hairline: #38332c;
+    --color-primary: #ede7dd;
+    --color-primary-container: #2e2a24;
+    --color-secondary: #c2b19f;
+    --color-secondary-container: #3a3227;
+    --color-tertiary: #dfd0bc;
+  }
+
+  * {
+    border-radius: 0px !important;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Newsreader', Georgia, Cambria, 'Times New Roman', serif;
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    line-height: 1.6;
+    font-feature-settings: 'cv01', 'cv02', 'onum';
+  }
+
+  /* Custom Hairline Scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cfc5bd;
+    border-radius: 0px;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: #474138;
+  }
+}
+
+/* Editorial Ledger & Plate Utilities */
+@layer components {
+  .sketch-border {
+    border: 1px solid var(--border-outline);
+  }
+
+  .sketch-border-b {
+    border-bottom: 1px solid var(--border-outline);
+  }
+
+  .sketch-border-t {
+    border-top: 1px solid var(--border-outline);
+  }
+
+  .sketch-border-r {
+    border-right: 1px solid var(--border-outline);
+  }
+
+  .sketch-border-l {
+    border-left: 1px solid var(--border-outline);
+  }
+
+  /* Exhibition Catalog Plate */
+  .catalog-plate {
+    background-color: var(--bg-container-low);
+    border: 1px solid var(--border-outline);
+    position: relative;
+    transition: all 0.15s ease-in-out;
+  }
+  .catalog-plate:hover {
+    background-color: var(--bg-container);
+  }
+
+  /* Ledger Input */
+  .ledger-input {
+    background-color: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-outline);
+    color: var(--text-primary);
+    padding: 0.5rem 0.25rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .ledger-input:focus {
+    border-bottom-color: var(--color-primary);
+  }
+
+  /* Editorial Button */
+  .btn-editorial-primary {
+    background-color: var(--color-primary);
+    color: #ffffff;
+    padding: 0.625rem 1.25rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: background-color 0.15s ease;
+    border: 1px solid var(--color-primary);
+  }
+  .dark .btn-editorial-primary {
+    background-color: #f5eee6;
+    color: #1a1714;
+    border-color: #f5eee6;
+  }
+  .btn-editorial-primary:hover {
+    opacity: 0.92;
+  }
+  .btn-editorial-primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .btn-editorial-secondary {
+    background-color: transparent;
+    color: var(--text-primary);
+    padding: 0.625rem 1.25rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 1px solid var(--border-outline);
+    transition: all 0.15s ease;
+  }
+  .btn-editorial-secondary:hover {
+    background-color: var(--bg-container);
+  }
+  .btn-editorial-secondary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .btn-editorial-ghost {
+    background-color: transparent;
+    color: var(--text-primary);
+    padding: 0.5rem 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    transition: all 0.15s ease;
+  }
+  .btn-editorial-ghost:hover {
+    background-color: var(--bg-container);
+  }
+}

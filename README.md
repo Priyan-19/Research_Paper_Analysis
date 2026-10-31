@@ -21,7 +21,7 @@ Traditional PDF chatbots rely exclusively on dense vector similarity, which stru
   - **Graph Search**: Cypher queries over Neo4j for multi-hop structural reasoning.
   - **Reciprocal Rank Fusion (RRF)**: Merges and ranks vector and graph contexts seamlessly.
 - 💬 **Grounded RAG Question Answering**: Synthesizes verified answers with explicit paper & entity citations, eliminating hallucinations.
-- 📊 **Interactive Streamlit Dashboard**: A feature-rich UI for paper management, RAG chat, graph visualizers, entity canonicalization, and link prediction.
+- 📊 **Interactive React Web UI**: A production-grade editorial research interface for paper ingestion, grounded RAG dialogues, interactive Neo4j knowledge graph exploration, GNN link prediction, and quantitative evaluation.
 - ⚡ **FastAPI REST Backend**: Asynchronous microservice API providing Swagger UI documentation (`/docs`) and background worker processing.
 - 📈 **Graph Neural Network (GNN) Link Prediction**: Predicts potential future research collaboration and concept connections.
 
@@ -31,7 +31,7 @@ Traditional PDF chatbots rely exclusively on dense vector similarity, which stru
 
 ```text
                +----------------------------------+
-               |   Streamlit UI / REST Client     |
+               |     React Web UI (Port 5173)     |
                +-----------------+----------------+
                                  |
                                  v
@@ -49,14 +49,57 @@ Traditional PDF chatbots rely exclusively on dense vector similarity, which stru
 +---------------+        +---------------+        +---------------+
 ```
 
-- **Programming Language**: Python >= 3.11
-- **Package Manager**: `uv` (Fast Python package installer and resolver)
+- **Programming Language**: Python >= 3.11 & TypeScript
+- **Package Manager**: `uv` (Fast Python package manager) & `npm`
 - **Backend Framework**: FastAPI + Uvicorn + Pydantic v2
 - **Vector Database**: PostgreSQL with `pgvector` (via SQLAlchemy Async)
 - **Graph Database**: Neo4j (via Neo4j Python Driver & Cypher)
 - **Caching & Job Queue**: Redis
-- **Frontend Interface**: Streamlit with Plotly graph visualizers
-- **LLM & Embeddings**: Google Gemini, Sentence Transformers (`all-MiniLM-L6-v2`), Ollama, or OpenAI
+- **Frontend Interface**: React 18 + Vite + TypeScript (Tailwind CSS, Radix, react-force-graph-2d)
+- **LLM & Embeddings**: Groq Cloud (`openai/gpt-oss-120b`, Llama 3.3) / Google Gemini, Sentence Transformers (`all-MiniLM-L6-v2`)
+
+---
+
+## 🎨 React Frontend (New Modern Web UI)
+
+The project includes a production-quality chatbot web UI in React that replaces the legacy Streamlit interface, styled with a warm tactile editorial design system (Newsreader typography, warm parchment `#fef9f0` canvas, sharp 90° corners, and exhibition catalog styling).
+
+### Tech Stack
+- **Framework**: React 18 + Vite + TypeScript
+- **Styling**: Tailwind CSS + Custom Design System tokens
+- **State Management**: Zustand (UI and conversation state) + TanStack Query (server state & caching)
+- **Routing**: `react-router-dom`
+- **Math & Code**: `react-markdown` + `remark-math` + `rehype-katex` + `rehype-highlight`
+- **Knowledge Graph Visualizer**: `react-force-graph-2d`
+- **Icons**: `lucide-react`
+
+### Getting Started with React Frontend
+
+```bash
+# 1. Navigate to the frontend directory
+cd frontend
+
+# 2. Copy the environment template
+cp .env.example .env
+
+# 3. Install dependencies
+npm install
+
+# 4. Start Vite development server
+npm run dev
+```
+
+Visit **http://localhost:5173** to access the research assistant interface.
+
+### Building for Production & Docker
+
+```bash
+# Build production bundle
+npm run build
+
+# Run via Docker
+docker-compose up --build frontend
+```
 
 ---
 
@@ -68,15 +111,28 @@ Traditional PDF chatbots rely exclusively on dense vector similarity, which stru
 ├── modules.md                                      # Architectural Modules Blueprint
 ├── README.md                                       # Project Overview & Setup Guide
 ├── .gitignore                                      # Root Git ignore rules
-└── backend/                                        # FastAPI Application & Streamlit UI
+├── run_all.ps1 / run_all.bat                       # One-command full-stack launchers (Root)
+├── stop_all.ps1 / stop_all.bat                     # One-command full-stack shutdown scripts (Root)
+├── frontend/                                       # Production React 18 + Vite Web Application
+│   ├── src/
+│   │   ├── api/                                    # Typed REST API layer & SSE streaming client
+│   │   ├── components/                             # UI components (Chat, Graph, Papers, Sources)
+│   │   ├── pages/                                  # ChatPage, PapersPage, KnowledgeGraphPage, etc.
+│   │   ├── store/                                  # Zustand state management (Chat, UI, Settings)
+│   │   └── types/                                  # TypeScript interface definitions
+│   ├── package.json                                # NPM frontend dependencies & scripts
+│   ├── tailwind.config.js                          # Editorial design system token configuration
+│   └── vite.config.ts                              # Vite build & proxy configuration
+└── backend/                                        # FastAPI REST Application Service
     ├── app/                                        # Core application package
-    │   ├── api/                                    # REST API endpoints (v1)
+    │   ├── api/v1/                                 # REST API endpoints (health, papers, chat, graph)
     │   ├── core/                                   # Application configuration & logging
     │   ├── database/                               # Postgres, Neo4j, and Redis async clients
     │   ├── graph/                                  # Graph extractors, canonicalizer & GNN
     │   ├── ingestion/                              # PDF loader, chunker & metadata extractor
+    │   ├── llm/                                    # Multi-provider LLM abstraction (Groq, Gemini)
     │   ├── rag/                                    # Hybrid retriever & grounded chat service
-    │   ├── schemas/                                # Pydantic data schemas
+    │   ├── schemas/                                # Pydantic v2 data models
     │   ├── services/                               # Business logic & paper management
     │   └── workers/                                # Background paper processing workers
     ├── data/                                       # Storage for PDF uploads & processed files
@@ -86,10 +142,7 @@ Traditional PDF chatbots rely exclusively on dense vector similarity, which stru
     ├── tests/                                      # Pytest suite
     ├── Dockerfile.backend                          # Backend container definition
     ├── docker-compose.yml                          # Multi-container database setup
-    ├── pyproject.toml / requirements.txt           # Python dependency specifications
-    ├── run_all.ps1 / run_all.bat                   # Automation scripts to launch full stack
-    ├── stop_all.ps1                                # Script to stop running background services
-    └── streamlit_app.py                            # Streamlit web application frontend
+    └── pyproject.toml / requirements.txt           # Python dependency specifications
 ```
 
 ---
@@ -161,30 +214,41 @@ uv pip install -r requirements.txt
 
 ### Step 4: Run the Application
 
-#### Option A: One-Click Script (Recommended for Windows)
+#### Option A: One-Command Launcher (Recommended for Windows)
 
-Run the automated launcher script to start Docker databases, the FastAPI server, and the Streamlit UI simultaneously:
+Run the automated launcher script to start Docker databases, the FastAPI backend, and the React frontend simultaneously:
 
+**In PowerShell:**
 ```powershell
-# Run via PowerShell
 .\run_all.ps1
+```
+
+**Or in Command Prompt (CMD):**
+```cmd
+run_all.bat
 ```
 
 To stop all services when done:
 ```powershell
 .\stop_all.ps1
 ```
+*(Or in CMD: `stop_all.bat`)*
 
-#### Option B: Manual Execution
+#### Option B: Individual Terminal Commands
 
-1. **Start FastAPI Backend**:
+1. **Start Databases (Docker)**:
    ```bash
-   uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+   cd backend && docker-compose up -d postgres neo4j redis
    ```
 
-2. **Start Streamlit Dashboard**:
+2. **Start FastAPI Backend (Port 8000)**:
    ```bash
-   streamlit run streamlit_app.py --server.port 8501
+   cd backend && uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+   ```
+
+3. **Start React Frontend (Port 5173)**:
+   ```bash
+   cd frontend && npm run dev
    ```
 
 ---
@@ -193,7 +257,7 @@ To stop all services when done:
 
 | Service / Interface | URL | Description |
 | :--- | :--- | :--- |
-| **Streamlit Web UI** | `http://localhost:8501` | Main interactive research assistant dashboard |
+| **React Web UI** | `http://localhost:5173` | Main interactive research assistant dashboard |
 | **FastAPI Swagger Docs** | `http://localhost:8000/docs` | Interactive OpenAPI documentation |
 | **FastAPI ReDoc** | `http://localhost:8000/redoc` | Alternative API documentation |
 | **API Health Check** | `http://localhost:8000/api/v1/health` | Service health status endpoint |

@@ -3,17 +3,18 @@
 # 🧠 LLM + Knowledge Graph Research Assistant
 ### Hybrid RAG Intelligence Platform for Academic & Scientific Research Papers 🌐📚
 
-[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-18.3-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
-[![Neo4j](https://img.shields.io/badge/Neo4j-Graph_DB-008CC1?style=for-the-badge&logo=neo4j&logoColor=white)](https://neo4j.com/)
-[![Redis](https://img.shields.io/badge/Redis-Cache_%26_Queue-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
-[![Groq](https://img.shields.io/badge/Groq_Cloud-Llama_3.3_%2F_GPT--OSS-F55036?style=for-the-badge&logo=fastapi&logoColor=white)](https://groq.com/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-GNN_GCN-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![Vite](https://img.shields.io/badge/VITE-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![React](https://img.shields.io/badge/REACT%2018-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TYPESCRIPT-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/TAILWIND%20CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![FastAPI](https://img.shields.io/badge/FASTAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Python](https://img.shields.io/badge/PYTHON%203.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Google Gemini](https://img.shields.io/badge/GOOGLE%20GEMINI-8E75C2?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
+[![Groq Cloud](https://img.shields.io/badge/GROQ%20CLOUD-F55036?style=for-the-badge&logo=meta&logoColor=white)](https://groq.com/)
+[![PostgreSQL](https://img.shields.io/badge/POSTGRESQL%20PGVECTOR-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
+[![Neo4j](https://img.shields.io/badge/NEO4J%20GRAPH-008CC1?style=for-the-badge&logo=neo4j&logoColor=white)](https://neo4j.com/)
+[![Redis](https://img.shields.io/badge/REDIS-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
+[![PyTorch](https://img.shields.io/badge/PYTORCH%20GNN-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org/)
 
 **LLM + Knowledge Graph Research Assistant** is a state-of-the-art hybrid AI intelligence platform engineered to index, cross-reference, reason over, and synthesize complex academic research papers (PDFs). By orchestrating dense vector similarity search with structured graph relational traversal and Graph Neural Networks, it delivers verifiable, hallucination-free research synthesis with precise citations.
 
@@ -95,13 +96,6 @@ graph TD
     LLM --> Guard --> ChatUI
     FastAPI --> REDIS
 ```
-
-> [!NOTE]
-> High-resolution system architecture diagrams are available directly in the repository:
-> - **Scalable Vector**: [System_Architecture.svg](System_Architecture.svg)
-> - **Ultra-HD Image (3200 × 2160)**: [System_Architecture.png](System_Architecture.png)
-> - **Standard Presentation Image**: [System_Architecture.jpg](System_Architecture.jpg)
-
 ---
 
 ## 🚀 Key Features

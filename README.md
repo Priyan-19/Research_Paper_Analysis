@@ -480,6 +480,6 @@ npm run build
 
 <div align="center">
   <p>Built with 🧠 for Grounded Academic & Scientific Research Intelligence</p>
-  <p>Developed by <strong>Priyan-19</strong></p>
+  <p>Developed by <strong>Priyan/strong></p>
   <p>© 2026 Academic Hybrid RAG Research Platform. All Rights Reserved.</p>
 </div>

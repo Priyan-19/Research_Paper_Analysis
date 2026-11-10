@@ -1,3 +1,5 @@
+import asyncio
+import random
 from typing import Optional, Type, TypeVar
 import httpx
 from pydantic import BaseModel
@@ -13,17 +15,20 @@ T = TypeVar("T", bound=BaseModel)
 
 class GroqProvider(BaseLLMProvider):
     """
-    Cloud LLM Provider implementing Groq API (e.g. llama-3.3-70b-versatile, llama3-70b-8192).
+    Cloud LLM Provider implementing Groq API (e.g. llama-3.3-70b-versatile, llama3-70b-8192)
+    with exponential backoff, rate-limit retry resilience, and structured output parsing.
     """
     def __init__(
         self,
         model_name: Optional[str] = None,
         api_key: Optional[str] = None,
-        base_url: str = "https://api.groq.com/openai/v1"
+        base_url: str = "https://api.groq.com/openai/v1",
+        max_retries: int = 3
     ):
         self.model_name = model_name or settings.GROQ_MODEL
         self._api_key = api_key
         self.base_url = base_url.rstrip("/")
+        self.max_retries = max_retries
 
     @property
     def api_key(self) -> str:
@@ -39,6 +44,42 @@ class GroqProvider(BaseLLMProvider):
                 provider="Groq",
                 message="GROQ_API_KEY is not configured in .env file."
             )
+
+    async def _post_with_retry(self, url: str, payload: dict, headers: dict) -> dict:
+        """
+        Executes HTTP POST request with exponential backoff and jitter for HTTP 429 and 5xx errors.
+        """
+        for attempt in range(self.max_retries + 1):
+            try:
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    response = await client.post(url, json=payload, headers=headers)
+
+                    if response.status_code == 200:
+                        return response.json()
+
+                    # Handle Rate Limiting (429) or Transient Server Errors (5xx)
+                    if response.status_code in (429, 502, 503, 504) and attempt < self.max_retries:
+                        backoff = (2 ** attempt) + random.uniform(0.1, 0.5)
+                        logger.warning(
+                            f"Groq API returned HTTP {response.status_code}. "
+                            f"Applying exponential backoff ({backoff:.2f}s, attempt {attempt + 1}/{self.max_retries})..."
+                        )
+                        await asyncio.sleep(backoff)
+                        continue
+
+                    raise LLMProviderError(
+                        provider="Groq",
+                        message=f"Groq API returned status {response.status_code}: {response.text}"
+                    )
+            except httpx.RequestError as req_err:
+                if attempt < self.max_retries:
+                    backoff = (2 ** attempt) + random.uniform(0.1, 0.5)
+                    logger.warning(f"Groq network error: {req_err}. Retrying in {backoff:.2f}s...")
+                    await asyncio.sleep(backoff)
+                    continue
+                raise LLMProviderError(provider="Groq", message=f"Network error after {self.max_retries} retries: {str(req_err)}")
+
+        raise LLMProviderError(provider="Groq", message="Exceeded maximum retries for Groq API request.")
 
     async def generate_text(
         self,
@@ -68,19 +109,9 @@ class GroqProvider(BaseLLMProvider):
         url = f"{self.base_url}/chat/completions"
 
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                response = await client.post(url, json=payload, headers=headers)
-
-                if response.status_code != 200:
-                    raise LLMProviderError(
-                        provider="Groq",
-                        message=f"Groq API returned status {response.status_code}: {response.text}"
-                    )
-
-                data = response.json()
-                content = data["choices"][0]["message"]["content"]
-                return content.strip()
-
+            data = await self._post_with_retry(url, payload, headers)
+            content = data["choices"][0]["message"]["content"]
+            return content.strip()
         except Exception as e:
             if isinstance(e, LLMProviderError):
                 raise e
@@ -98,8 +129,9 @@ class GroqProvider(BaseLLMProvider):
 
         schema_json = response_schema.model_json_schema()
         json_instruction = (
-            f"\n\nIMPORTANT: Return your response strictly as a valid JSON object matching this schema:\n"
-            f"```json\n{schema_json}\n```\nDo not include any explanation outside the JSON block."
+            f"\n\nCRITICAL REQUIREMENT: Output valid JSON matching this schema:\n"
+            f"{schema_json}\n"
+            f"Do not output markdown codeblocks, commentary, or text outside the raw JSON object."
         )
 
         full_prompt = prompt + json_instruction
@@ -109,4 +141,4 @@ class GroqProvider(BaseLLMProvider):
             temperature=temperature
         )
 
-        return StructuredOutputParser.parse_json_response(raw_text, response_schema)
+        return StructuredOutputParser.parse(raw_text, response_schema)

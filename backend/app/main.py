@@ -19,6 +19,12 @@ async def lifespan(app: FastAPI):
     """
     logger.info(f"Starting {settings.PROJECT_NAME} (v{settings.VERSION})...")
 
+    # In test mode, bypass live external network socket connections to allow instant test execution
+    import os
+    if os.environ.get("TESTING", "").lower() in ("1", "true"):
+        yield
+        return
+
     # Initialize Database Extensions & Connections
     await init_postgres_extensions()
     await neo4j_client.connect()

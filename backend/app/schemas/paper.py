@@ -50,6 +50,7 @@ class PaperResponse(PaperBase):
     total_pages: int
     status: str
     error_message: Optional[str] = None
+    user_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

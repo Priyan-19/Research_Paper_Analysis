@@ -91,9 +91,28 @@ The backend is backed by an automated test suite across unit, API, and multi-dat
 ### Test Architecture
 
 - **`tests/conftest.py`**: Disables blocking network lifespan hooks on `FastAPI` during tests (`_noop_lifespan`), intercepts and mocks external LLM provider calls with `guard_external_llm`, and provides reusable database mocks.
-- **`tests/unit/`**: Isolated unit tests for PDF extraction (`test_pdf_loader.py`), section detection (`test_section_detector.py`), semantic chunking (`test_chunker.py`), entity canonicalization (`test_canonicalizer.py`), dense embeddings (`test_embeddings.py`), Cypher query builder (`test_neo4j_builder.py`), vector similarity (`test_vector_store.py`), and citation verification (`test_citation_guard.py`).
+- **`tests/unit/`**: Isolated unit tests for:
+  - Claim-level verification & grounding (`test_claim_verification.py`)
+  - Multi-tenancy & access control (`test_multi_tenancy_security.py`)
+  - Full-paper chunk-based graph extraction (`test_full_paper_extractor.py`)
+  - Hybrid entity canonicalization & version protection (`test_hybrid_canonicalizer.py`, `test_canonicalizer.py`)
+  - PyTorch GNN training pipeline & negative sampling (`test_gnn_training.py`)
+  - Tri-Hybrid RRF retrieval & reranker fallback (`test_tri_hybrid_rag.py`)
+  - Layout-aware PDF & table parsing (`test_pdf_loader.py`)
+  - Section detection (`test_section_detector.py`)
+  - Semantic chunking (`test_chunker.py`)
+  - Dense embeddings (`test_embeddings.py`)
+  - Cypher query builder (`test_neo4j_builder.py`)
+  - Vector similarity store (`test_vector_store.py`)
+  - Citation guardrail (`test_citation_guard.py`)
 - **`tests/api/`**: TestClient verification for health endpoints (`test_health_api.py`) and paper upload/listing endpoints (`test_papers_api.py`).
 - **`tests/integration/`**: Component interaction tests verifying PDF parser to chunker, chunker to embedding vectors, and RRF retrieval mechanics (`test_pipeline_integration.py`).
+
+For full technical specifications and migration details, refer to:
+- [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md)
+- [`docs/DATABASE_MIGRATIONS.md`](../docs/DATABASE_MIGRATIONS.md)
+- [`docs/TESTING_REPORT.md`](../docs/TESTING_REPORT.md)
+- [`docs/KNOWN_LIMITATIONS.md`](../docs/KNOWN_LIMITATIONS.md)
 
 ---
 
@@ -175,3 +194,15 @@ backend/
 ├── run_all.ps1 / .bat   # Full-stack launcher scripts
 └── stop_all.ps1 / .bat  # Full-stack shutdown scripts
 ```
+
+---
+
+<div align="center">
+
+Built with 🌿 for Academic Research Intelligence
+
+Developed by **[Priyan-19](https://github.com/Priyan-19)**
+
+© 2026 Academic Research Intelligence System. All Rights Reserved.
+
+</div>

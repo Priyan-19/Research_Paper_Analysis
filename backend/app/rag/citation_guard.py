@@ -104,31 +104,8 @@ class CitationGuard:
                         )
                     )
 
-        # Fallback: If no explicit inline citation tags were matched in text but sources exist,
-        # create badges for top retrieved sources
-        if not badges and retrieved_sources:
-            for src in retrieved_sources[:3]:
-                pid = str(src.get("paper_id", "doc_001")).strip()
-                title = src.get("paper_title") or src.get("title") or pid
-                page = src.get("page_number")
-                sec = src.get("section_name")
-                snippet = src.get("text") or src.get("snippet")
-
-                tag_str = f"[Paper: {pid}]"
-                dedup_key = f"auto_{pid}_{page}".lower()
-                if dedup_key not in seen_keys:
-                    seen_keys.add(dedup_key)
-                    badges.append(
-                        CitationBadge(
-                            paper_id=pid,
-                            paper_title=title,
-                            page_number=page,
-                            section_name=sec,
-                            citation_tag=tag_str,
-                            snippet=snippet[:200] if snippet else None
-                        )
-                    )
-
+        # Citation Integrity: Do not silently assign unrelated top-ranked documents as citations.
+        # Citations are strictly emitted only when explicitly grounded in the text and resolved to sources.
         return badges
 
     @classmethod

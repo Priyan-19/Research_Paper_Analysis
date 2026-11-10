@@ -43,7 +43,6 @@ jobs:
         image: neo4j:5-community
         env:
           NEO4J_AUTH: neo4j/ci_neo4j_password
-          NEO4J_PLUGINS: '["apoc"]'
         ports:
           - 7474:7474
           - 7687:7687

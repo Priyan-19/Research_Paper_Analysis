@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-10T11:16:46.152189",
+  "timestamp": "2026-11-10T12:14:13.454364",
   "total_questions": 4,
   "winning_strategy": "Experiment D (Hybrid RAG — Proposed)",
   "results": [
@@ -28,7 +28,7 @@
       "context_recall": 0.0833,
       "answer_relevance": 1.0,
       "mrr": 0.25,
-      "avg_execution_time_seconds": 0.0
+      "avg_execution_time_seconds": 0.001
     },
     {
       "experiment_name": "Experiment D (Hybrid RAG — Proposed)",

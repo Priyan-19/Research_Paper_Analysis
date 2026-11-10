@@ -63,6 +63,7 @@ class Neo4jGraphBuilder:
                 MATCH (tgt:Entity {{name: $tgt_name}})
                 MERGE (src)-[r:{rel_type}]->(tgt)
                 ON CREATE SET r.description = $description, r.paper_id = $paper_id
+                ON MATCH SET r.description = COALESCE(r.description, $description), r.paper_id = COALESCE(r.paper_id, $paper_id)
                 """
                 await session.run(
                     create_rel_query,

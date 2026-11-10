@@ -66,3 +66,22 @@ class TestPapersAPI:
             assert data["total"] == 1
             assert len(data["papers"]) == 1
             assert data["papers"][0]["title"] == "Attention Is All You Need"
+
+    def test_delete_paper_success(self, test_client):
+        """Deletes research paper and associated vector chunks and graph triples (204 No Content)."""
+        with patch("app.api.v1.papers.PaperService.delete_paper", new_callable=AsyncMock) as mock_delete:
+            mock_delete.return_value = True
+
+            res = test_client.delete("/api/v1/papers/p_123")
+            assert res.status_code == 204
+            mock_delete.assert_awaited_once()
+
+    def test_delete_paper_not_found(self, test_client):
+        """Returns 404 when attempting to delete non-existent paper."""
+        from app.core.exceptions import ResourceNotFoundError
+
+        with patch("app.api.v1.papers.PaperService.delete_paper", new_callable=AsyncMock) as mock_delete:
+            mock_delete.side_effect = ResourceNotFoundError(resource_type="Paper", resource_id="nonexistent")
+
+            res = test_client.delete("/api/v1/papers/nonexistent")
+            assert res.status_code == 404

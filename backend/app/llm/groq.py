@@ -22,8 +22,12 @@ class GroqProvider(BaseLLMProvider):
         base_url: str = "https://api.groq.com/openai/v1"
     ):
         self.model_name = model_name or settings.GROQ_MODEL
-        self.api_key = api_key or settings.GROQ_API_KEY
+        self._api_key = api_key
         self.base_url = base_url.rstrip("/")
+
+    @property
+    def api_key(self) -> str:
+        return self._api_key or settings.GROQ_API_KEY
 
     @property
     def provider_name(self) -> str:

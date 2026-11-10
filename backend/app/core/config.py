@@ -1,7 +1,15 @@
 from pathlib import Path
 from typing import Optional
+from dotenv import load_dotenv
 # pyrefly: ignore [missing-import]
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Force-load .env so it overrides any stale system/user Windows environment variables
+_backend_env = Path(__file__).resolve().parent.parent.parent / ".env"
+if _backend_env.exists():
+    load_dotenv(dotenv_path=_backend_env, override=True)
+else:
+    load_dotenv(override=True)
 
 
 class Settings(BaseSettings):

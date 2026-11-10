@@ -26,8 +26,9 @@ export function PapersPage() {
   const deleteMutation = useMutation({
     mutationFn: (paperId: string) => deletePaper(paperId),
     onSuccess: () => {
-      showToast("Paper record and vector chunks deleted.", "info");
+      showToast("Paper, vector chunks, and Knowledge Graph triples deleted.", "info");
       queryClient.invalidateQueries({ queryKey: ["papers-list"] });
+      queryClient.invalidateQueries({ queryKey: ["graph-stats"] });
     },
     onError: (err: any) => {
       showToast(`Delete failed: ${err.message}`, "error");
@@ -199,7 +200,7 @@ export function PapersPage() {
 
                       <button
                         onClick={() => {
-                          if (confirm(`Delete paper "${paper.title || paper.filename}" and its vector chunks?`)) {
+                          if (confirm(`Delete paper "${paper.title || paper.filename}"? This will delete its vector embeddings from PostgreSQL and knowledge graph triples from Neo4j.`)) {
                             deleteMutation.mutate(paper.id);
                           }
                         }}

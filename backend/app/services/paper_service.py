@@ -116,6 +116,29 @@ class PaperService:
             except Exception as emb_err:
                 logger.warning(f"Automatic embedding generation deferred for paper {paper_id}: {str(emb_err)}")
 
+            # 8. Automatically extract Knowledge Graph entities/relationships & persist to Neo4j
+            try:
+                from app.graph.extractor import GraphExtractor
+                from app.graph.neo4j_builder import Neo4jGraphBuilder
+
+                sample_text = "\n\n".join([c.text for c in chunks[:10]])
+                extraction = await GraphExtractor.extract_graph_from_text(
+                    text=sample_text,
+                    paper_id=paper_id,
+                    paper_title=paper.title or paper.filename
+                )
+                await Neo4jGraphBuilder.persist_paper_graph(
+                    paper_id=paper_id,
+                    paper_title=paper.title or paper.filename,
+                    graph_data=extraction
+                )
+                logger.info(
+                    f"Automatically extracted and saved Knowledge Graph for '{original_filename}' "
+                    f"({len(extraction.entities)} entities, {len(extraction.relationships)} relationships) to Neo4j."
+                )
+            except Exception as graph_err:
+                logger.warning(f"Automatic knowledge graph extraction deferred for paper {paper_id}: {str(graph_err)}")
+
             logger.info(f"Successfully processed paper '{original_filename}' (ID: {paper_id}) with {len(chunks)} chunks.")
             return paper
 

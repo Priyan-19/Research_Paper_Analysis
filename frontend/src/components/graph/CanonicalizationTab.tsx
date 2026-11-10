@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchGraphStats } from "../../api/graph";
 import { fetchPapers } from "../../api/papers";
 import { useNavigate } from "react-router-dom";
-import { GitMerge, Layers, Database, Sparkles, BookOpen } from "lucide-react";
+import { GitMerge, Layers, Database } from "lucide-react";
 import { GraphStatsResponse, PaperListResponse } from "../../types/api";
 
 export function CanonicalizationTab() {
@@ -24,15 +24,6 @@ export function CanonicalizationTab() {
 
   return (
     <div className="space-y-4 p-4 font-serif">
-      {/* Informative Header Banner */}
-      <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 text-xs text-amber-900 dark:text-amber-300 leading-relaxed">
-        <div className="font-semibold flex items-center gap-1.5 mb-0.5">
-          <Sparkles className="w-3.5 h-3.5 text-amber-700" />
-          <span>Automated Entity Canonicalization Engine</span>
-        </div>
-        During PDF ingestion, the backend <code className="font-mono px-1 py-0.5 bg-amber-100 dark:bg-amber-900 border border-amber-300">app.graph.canonicalizer.EntityCanonicalizer</code> automatically detects and merges surface form variations (synonyms, acronyms, and aliases) into unified canonical nodes to build a connected Neo4j knowledge graph.
-      </div>
-
       {isLoading ? (
         <div className="p-12 text-center text-xs text-parchment-secondary border border-parchment-outline-variant">
           Querying Neo4j canonical index...

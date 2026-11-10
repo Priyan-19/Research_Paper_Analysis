@@ -64,9 +64,9 @@ The backend is backed by an automated test suite across unit, API, and multi-dat
 
 ### Test Metrics
 
-- **Total Test Cases**: **102 tests**
-- **Test Pass Rate**: **100% (102/102 passed)**
-- **Overall Line Coverage**: **75.03%** (Exceeds 65% minimum gate)
+- **Total Test Cases**: **105 tests**
+- **Test Pass Rate**: **100% (105/105 passed)**
+- **Overall Line Coverage**: **73.0%** (Exceeds 65% minimum gate)
 - **Execution Time**: ~6.1 seconds
 
 ### Running Tests Locally
@@ -136,7 +136,7 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 Backend changes are validated by GitHub Actions workflows in `.github/workflows/`:
 
-- **`backend-ci.yml`**: Runs on push/PR for `backend/**`. Executes Ruff linting, sets up Python 3.12, runs 102 tests, validates coverage (`--cov-fail-under=65`), and archives `coverage.xml`.
+- **`backend-ci.yml`**: Runs on push/PR for `backend/**`. Executes Ruff linting, sets up Python 3.12, runs 105 tests, validates coverage (`--cov-fail-under=65`), and archives `coverage.xml`.
 - **`integration-tests.yml`**: Spins up live Docker service containers (`pgvector`, `neo4j`, `redis`) and executes multi-database integration tests.
 - **`security-checks.yml`**: Scans dependencies with `pip-audit` for CVEs and executes Bandit SAST code security checks.
 - **`docker-build.yml`**: Validates containerization using `Dockerfile.backend` with multi-stage Buildx caching.
@@ -163,7 +163,7 @@ backend/
 │   ├── uploads/         # Staging area for raw PDF uploads
 │   └── processed/       # Extracted JSON & processed chunks
 ├── scripts/             # Admin & evaluation scripts (evaluate_rag.py, check_stats.py, etc.)
-├── tests/               # Pytest automated test suite (102 tests, 75.03% coverage)
+├── tests/               # Pytest automated test suite (105 tests, 73.0% coverage)
 │   ├── conftest.py      # Lifespan overrides, LLM guardrails, DB fixtures
 │   ├── api/             # Health & Papers TestClient tests
 │   ├── integration/     # Pipeline interaction tests

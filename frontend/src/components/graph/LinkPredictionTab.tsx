@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { predictGnnLinks } from "../../api/graph";
 import { Button } from "../ui/Button";
 import { GNNLinkPredictionItem } from "../../types/api";
-import { Brain, ArrowRight, Sparkles, Loader2 } from "lucide-react";
+import { ArrowRight, Sparkles, Loader2 } from "lucide-react";
 import { useUIStore } from "../../store/useUIStore";
 
 export function LinkPredictionTab() {
@@ -37,14 +37,6 @@ export function LinkPredictionTab() {
 
   return (
     <div className="space-y-4 p-4 font-serif">
-      <div className="p-3 bg-purple-50 dark:bg-purple-950/20 border border-purple-200 text-xs text-purple-900 dark:text-purple-300 leading-relaxed">
-        <div className="font-semibold flex items-center gap-1.5 mb-0.5">
-          <Brain className="w-3.5 h-3.5 text-purple-700" />
-          <span>Graph Neural Network (GNN) Link Prediction Engine</span>
-        </div>
-        Computes Graph Convolutional Network (GCN) embedding similarity in Neo4j relational space to discover unasserted research links, potential cross-disciplinary citations, and novel methodology pairings.
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Source Entity Input */}
         <div className="space-y-1">

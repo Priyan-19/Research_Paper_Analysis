@@ -155,7 +155,7 @@ graph TD
 | **Embedding Model** | `sentence-transformers/all-MiniLM-L6-v2` | 384-dimensional dense semantic representations |
 | **PDF Processing** | PyMuPDF (`fitz`) | High-fidelity text, layout, and metadata extraction |
 | **Graph Neural Network** | PyTorch, PyTorch Geometric (GCN) | Unsupervised and supervised link prediction |
-| **Testing Frameworks** | `pytest`, `pytest-cov`, `vitest`, RTL | End-to-end backend (102 tests, 75.03% cov) & frontend (28 tests, 65.85% cov) |
+| **Testing Frameworks** | `pytest`, `pytest-cov`, `vitest`, RTL | End-to-end backend (105 tests, 73.0% cov) & frontend (28 tests, 65.85% cov) |
 | **CI/CD & Automation** | GitHub Actions | 6 automated workflows (Unit CI, Integration, Docker, Security SAST, CD) |
 
 ---
@@ -166,7 +166,7 @@ graph TD
 d:/FY/
 ├── .github/                                        # GitHub Actions CI/CD workflows
 │   └── workflows/
-│       ├── backend-ci.yml                          # Python 3.12 CI: Ruff, 102 tests, >=65% coverage
+│       ├── backend-ci.yml                          # Python 3.12 CI: Ruff, 105 tests, >=65% coverage
 │       ├── frontend-ci.yml                         # Node 20 CI: Oxlint, TypeScript, Vitest, >=60% coverage
 │       ├── integration-tests.yml                   # Live multi-DB services (pgvector, Neo4j, Redis)
 │       ├── docker-build.yml                        # Docker Compose validation & Buildx images
@@ -219,7 +219,7 @@ d:/FY/
 │   │   ├── check_stats.py                          # Check DB records, vectors, and triples
 │   │   ├── clear_neo4j.py                          # Safe reset for Neo4j database
 │   │   └── reprocess_all_papers.py                 # Batch re-index and re-chunk tool
-│   ├── tests/                                      # Pytest automated test suite (102 tests, 75.03% cov)
+│   ├── tests/                                      # Pytest automated test suite (105 tests, 73.0% cov)
 │   │   ├── conftest.py                             # DB mocks, lifespan overrides & LLM guards
 │   │   ├── api/                                    # FastAPI TestClient API tests
 │   │   ├── integration/                            # Multi-component pipeline tests
@@ -444,7 +444,7 @@ The repository features an enterprise-grade automated testing suite, coverage re
 
 | Layer | Runner | Test Count | Pass Rate | Line Coverage | Focus Areas |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Backend Unit & Modules** | `pytest` + `pytest-cov` | **102 tests** | **100% (102/102)** | **75.03%** | PDF parser, section detector, chunker, canonicalizer, embeddings, graph extractor, vector store, citation guard, health & papers API |
+| **Backend Unit & Modules** | `pytest` + `pytest-cov` | **105 tests** | **100% (105/105)** | **73.0%** | PDF parser, section detector, chunker, canonicalizer, embeddings, graph extractor, vector store, citation guard, health & papers API |
 | **Frontend Unit & Components**| `vitest` + `@vitest/coverage-v8` | **28 tests** | **100% (28/28)** | **65.85%** | Zustand stores (Chat, UI, Settings), API client, UI primitives (Card, Badge), Settings Page, SSE parsers |
 | **Integration Suite** | `pytest` + Docker Services | Multi-DB | **100%** | Full pipeline | Multi-database orchestration: PostgreSQL (`pgvector`), Neo4j 5, Redis 7 |
 
@@ -565,6 +565,6 @@ Configure these secrets in **GitHub Repository Settings → Secrets and variable
 
 <div align="center">
   <p>Built with 🧠 for Grounded Academic & Scientific Research Intelligence</p>
-  <p>Developed by <strong>Priyan/strong></p>
+  <p>Developed by <strong>Priyan</strong></p>
   <p>© 2026 Academic Hybrid RAG Research Platform. All Rights Reserved.</p>
 </div>

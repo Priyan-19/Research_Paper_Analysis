@@ -86,8 +86,8 @@ jobs:
           if [ -z "$VERSION" ]; then
             VERSION="${{ github.sha }}"
           fi
-          echo "backend_tag=${IMAGE_BACKEND}:${VERSION},${IMAGE_BACKEND}:${{ inputs.target_env }}" >> $GITHUB_OUTPUT
-          echo "frontend_tag=${IMAGE_FRONTEND}:${VERSION},${IMAGE_FRONTEND}:${{ inputs.target_env }}" >> $GITHUB_OUTPUT
+          echo "backend_tag=${IMAGE_BACKEND}:${VERSION},${IMAGE_BACKEND}:${{ inputs.target_env }},${IMAGE_BACKEND}:latest" >> $GITHUB_OUTPUT
+          echo "frontend_tag=${IMAGE_FRONTEND}:${VERSION},${IMAGE_FRONTEND}:${{ inputs.target_env }},${IMAGE_FRONTEND}:latest" >> $GITHUB_OUTPUT
 
       - name: Build & Push Backend Container
         uses: docker/build-push-action@v5

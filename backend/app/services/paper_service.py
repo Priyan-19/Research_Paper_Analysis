@@ -95,6 +95,17 @@ class PaperService:
         return paper
 
     @classmethod
+    async def process_and_save_paper(
+        cls,
+        db: AsyncSession,
+        file_bytes: bytes,
+        original_filename: str,
+        user_id: Optional[str] = None
+    ) -> Paper:
+        """Backward-compatible wrapper for paper upload."""
+        return await cls.save_paper_initial(db, file_bytes, original_filename, user_id=user_id)
+
+    @classmethod
     async def process_paper_background(cls, paper_id: str):
         """
         Asynchronous background task executing end-to-end PDF processing:

@@ -3,17 +3,24 @@ from app.graph.extractor import GraphExtractor
 from app.schemas.graph import KnowledgeGraphExtractionResult, EntityType
 
 
+def run_coroutine(coro):
+    """Executes a coroutine to completion without spinning up Windows loopback sockets."""
+    try:
+        coro.send(None)
+    except StopIteration as exc:
+        return exc.value
+
+
 class TestEntityExtractor:
     """Unit tests for Knowledge Graph Extraction logic and heuristic fallback."""
 
-    @pytest.mark.asyncio
-    async def test_extract_graph_empty_text(self):
+    def test_extract_graph_empty_text(self):
         """Returns empty extraction result on empty or whitespace text."""
-        result = await GraphExtractor.extract_graph_from_text(
+        result = run_coroutine(GraphExtractor.extract_graph_from_text(
             text="   ",
             paper_id="paper_test",
             paper_title="Test Title"
-        )
+        ))
         assert isinstance(result, KnowledgeGraphExtractionResult)
         assert len(result.entities) == 0
         assert len(result.relationships) == 0
@@ -38,4 +45,3 @@ class TestEntityExtractor:
         # Should form directed relationships connecting paper to extracted concepts
         assert len(result.relationships) > 0
         assert all(rel.source_entity != "" and rel.target_entity != "" for rel in result.relationships)
-

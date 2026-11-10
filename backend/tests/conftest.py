@@ -7,9 +7,24 @@ import sys
 
 # Guarantee test environment flag is set immediately before any app modules are imported
 os.environ["TESTING"] = "1"
+import atexit
+import logging
 from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock
 import pytest
+
+# Silence httpcore / httpx / huggingface_hub debug logs that can write to closed stdout/stderr at teardown
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("huggingface_hub").setLevel(logging.WARNING)
+
+# Prevent huggingface_hub close_session from executing via atexit after pytest closes stdout/stderr
+try:
+    from huggingface_hub.utils import _http
+    if hasattr(_http, "close_session"):
+        atexit.unregister(_http.close_session)
+except Exception:
+    pass
 
 # Ensure backend root is on sys.path
 backend_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -201,3 +216,13 @@ def sample_graph_data():
             GraphRelationship(source_entity="BERT", target_entity="GLUE", relation_type=RelationType.EVALUATED_ON, description="Evaluated on GLUE")
         ]
     )
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Cleanly close any open huggingface / httpx sessions while stdout/stderr are still valid."""
+    try:
+        from huggingface_hub.utils import _http
+        if hasattr(_http, "close_session"):
+            _http.close_session()
+    except Exception:
+        pass

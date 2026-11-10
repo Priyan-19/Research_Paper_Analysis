@@ -1,7 +1,7 @@
 import re
 import difflib
 from typing import List, Dict, Tuple, Set, Optional, Any
-from app.schemas.graph import GraphEntity, GraphRelationship, KnowledgeGraphExtractionResult
+from app.schemas.graph import GraphEntity, GraphRelationship, KnowledgeGraphExtractionResult, EntityType
 
 
 class EntityCanonicalizer:

@@ -36,17 +36,23 @@ wheels/
 *.swp
 *.swo
 
-# Testing & Coverage
+# Testing, Linter & Coverage
 .pytest_cache/
 .coverage
+.coverage.*
+coverage.xml
+coverage/
 htmlcov/
+*.cover
 .mypy_cache/
+.ruff_cache/
 
-# Application Data & Uploads
+# Application Data, Uploads & Evaluation Artifacts
 data/uploads/*
 !data/uploads/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+data/evaluation/benchmark_results.json
 
 # Package Manager Caches & OS
 .uv
@@ -55,3 +61,4 @@ data/processed/*
 Thumbs.db
 *.log
 logs/
+scratch/

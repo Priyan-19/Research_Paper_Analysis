@@ -10,6 +10,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+.Python
 .venv/
 venv/
 env/
@@ -18,18 +19,24 @@ ENV/
 .cache/
 .pytest_cache/
 .coverage
+.coverage.*
+coverage.xml
+coverage/
+*/coverage/
 htmlcov/
+*.cover
 .mypy_cache/
 .ruff_cache/
 
 # ------------------------------------------------------------------------------
-# 2. Node.js & React Frontend Artifacts
+# 2. Node.js & React Frontend Artifacts & Vitest Coverage
 # ------------------------------------------------------------------------------
 node_modules/
 */node_modules/
 dist/
 dist-ssr/
 */dist/
+coverage/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -51,20 +58,22 @@ frontend/.env
 !frontend/.env.example
 
 # ------------------------------------------------------------------------------
-# 4. Database, PDF Uploads & Processed Chunks
+# 4. Database, PDF Uploads, Processed Chunks & Benchmark Outputs
 # ------------------------------------------------------------------------------
 data/uploads/*
 !data/uploads/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+data/evaluation/benchmark_results.json
 backend/data/uploads/*
 !backend/data/uploads/.gitkeep
 backend/data/processed/*
 !backend/data/processed/.gitkeep
+backend/data/evaluation/benchmark_results.json
 *.sqlite3
 *.db
 
-# Docker volumes (if mounted locally)
+# Docker persistent volumes (if mounted locally)
 postgres_data/
 neo4j_data/
 redis_data/
@@ -73,8 +82,19 @@ redis_data/
 # 5. Build & Packaging Artifacts
 # ------------------------------------------------------------------------------
 build/
-*.egg-info/
+develop-eggs/
+downloads/
+eggs/
 .eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
 # ------------------------------------------------------------------------------
 # 6. IDEs, Editors & Tooling

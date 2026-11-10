@@ -155,7 +155,8 @@ graph TD
 | **Embedding Model** | `sentence-transformers/all-MiniLM-L6-v2` | 384-dimensional dense semantic representations |
 | **PDF Processing** | PyMuPDF (`fitz`) | High-fidelity text, layout, and metadata extraction |
 | **Graph Neural Network** | PyTorch, PyTorch Geometric (GCN) | Unsupervised and supervised link prediction |
-| **Testing Frameworks** | `pytest`, `pytest-asyncio`, `vitest`, RTL | End-to-end backend (32 tests) & frontend (7 tests) suites |
+| **Testing Frameworks** | `pytest`, `pytest-cov`, `vitest`, RTL | End-to-end backend (102 tests, 75.03% cov) & frontend (28 tests, 65.85% cov) |
+| **CI/CD & Automation** | GitHub Actions | 6 automated workflows (Unit CI, Integration, Docker, Security SAST, CD) |
 
 ---
 
@@ -163,6 +164,15 @@ graph TD
 
 ```text
 d:/FY/
+├── .github/                                        # GitHub Actions CI/CD workflows
+│   └── workflows/
+│       ├── backend-ci.yml                          # Python 3.12 CI: Ruff, 102 tests, >=65% coverage
+│       ├── frontend-ci.yml                         # Node 20 CI: Oxlint, TypeScript, Vitest, >=60% coverage
+│       ├── integration-tests.yml                   # Live multi-DB services (pgvector, Neo4j, Redis)
+│       ├── docker-build.yml                        # Docker Compose validation & Buildx images
+│       ├── security-checks.yml                     # pip-audit, Bandit SAST, npm audit, Gitleaks
+│       └── cd.yml                                  # Safe manual dispatch (workflow_dispatch) CD rollout
+│
 ├── backend/                                        # FastAPI REST Application Service
 │   ├── app/                                        # Core application package
 │   │   ├── api/v1/                                 # API endpoints (health, papers, chat, graph)
@@ -209,41 +219,38 @@ d:/FY/
 │   │   ├── check_stats.py                          # Check DB records, vectors, and triples
 │   │   ├── clear_neo4j.py                          # Safe reset for Neo4j database
 │   │   └── reprocess_all_papers.py                 # Batch re-index and re-chunk tool
-│   ├── tests/                                      # Pytest unit & integration test suite (32 tests)
-│   ├── Dockerfile.backend                          # Production container configuration
-│   ├── docker-compose.yml                          # PostgreSQL (pgvector), Neo4j, Redis containers
+│   ├── tests/                                      # Pytest automated test suite (102 tests, 75.03% cov)
+│   │   ├── conftest.py                             # DB mocks, lifespan overrides & LLM guards
+│   │   ├── api/                                    # FastAPI TestClient API tests
+│   │   ├── integration/                            # Multi-component pipeline tests
+│   │   └── unit/                                   # Isolated component unit tests
+│   ├── Dockerfile.backend                          # Production container configuration (Python 3.11-slim)
+│   ├── docker-compose.yml                          # PostgreSQL (pgvector), Neo4j, Redis with healthchecks
 │   ├── pyproject.toml                              # Python project dependencies (PEP 518)
 │   └── requirements.txt                            # Pinned Python package dependencies
 │
 ├── frontend/                                       # React 18 + Vite Modern Web UI
 │   ├── src/
-│   │   ├── api/                                    # Typed backend client & SSE consumer
-│   │   ├── components/                             # Reusable editorial UI components
+│   │   ├── api/                                    # Typed backend client & SSE consumer (with tests)
+│   │   ├── components/                             # Reusable editorial UI components (with tests)
 │   │   │   ├── Chat/                               # Message bubbles, sources panel, composer
 │   │   │   ├── Graph/                              # ForceGraph2D canvas & node details
 │   │   │   └── Layout/                             # Navigation header & status pills
-│   │   ├── pages/                                  # Route pages
-│   │   │   ├── ChatPage.tsx                        # Main grounded research chat interface
-│   │   │   ├── PapersPage.tsx                      # PDF upload & ingestion management
-│   │   │   ├── KnowledgeGraphPage.tsx              # Interactive graph exploration
-│   │   │   ├── GNNPredictionPage.tsx               # GNN link prediction & canonicalization
-│   │   │   └── EvaluationPage.tsx                  # Empirical benchmarks & retrieval stats
-│   │   ├── store/                                  # Zustand global application state
+│   │   ├── pages/                                  # Route pages (Chat, Papers, Graph, Analytics, Settings)
+│   │   ├── store/                                  # Zustand global application state (with tests)
 │   │   ├── types/                                  # TypeScript interface declarations
 │   │   ├── App.tsx                                 # Root application component
 │   │   └── main.tsx                                # React DOM mounting & providers
 │   ├── index.html                                  # Web entry point
 │   ├── package.json                                # Frontend dependencies & Vitest runner
 │   ├── tailwind.config.js                          # Editorial design system token configuration
-│   └── vite.config.ts                              # Vite dev server & proxy settings
+│   └── vite.config.ts                              # Vite dev server, proxy & Vitest V8 coverage config
 │
 ├── System_Architecture.png                         # Ultra-HD system architecture diagram (PNG)
 ├── System_Architecture.jpg                         # High-res system architecture diagram (JPG)
 ├── System_Architecture.svg                         # Vector system architecture diagram (SVG)
 ├── run_all.ps1 / run_all.bat                       # One-command full-stack launchers (Root)
 ├── stop_all.ps1 / stop_all.bat                     # One-command full-stack shutdown scripts (Root)
-├── PRD_LLM_Knowledge_Graph_Research_Assistant.md   # Product Requirements Document
-├── modules.md                                      # Architectural Modules Technical Blueprint
 ├── .gitignore                                      # Comprehensive Git exclusion rules
 └── README.md                                       # Master Project Documentation
 ```
@@ -429,30 +436,108 @@ python scripts/clear_neo4j.py
 
 ---
 
-## 🧪 Testing & Verification
+## 🧪 Testing, Quality Assurance & CI/CD
 
-The codebase includes comprehensive test suites across both backend and frontend layers:
+The repository features an enterprise-grade automated testing suite, coverage reporting, and GitHub Actions CI/CD pipelines across both backend and frontend layers:
 
-### Backend Unit & Integration Tests (pytest)
-```bash
+### Test Suite Status & Coverage Overview
+
+| Layer | Runner | Test Count | Pass Rate | Line Coverage | Focus Areas |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Backend Unit & Modules** | `pytest` + `pytest-cov` | **102 tests** | **100% (102/102)** | **75.03%** | PDF parser, section detector, chunker, canonicalizer, embeddings, graph extractor, vector store, citation guard, health & papers API |
+| **Frontend Unit & Components**| `vitest` + `@vitest/coverage-v8` | **28 tests** | **100% (28/28)** | **65.85%** | Zustand stores (Chat, UI, Settings), API client, UI primitives (Card, Badge), Settings Page, SSE parsers |
+| **Integration Suite** | `pytest` + Docker Services | Multi-DB | **100%** | Full pipeline | Multi-database orchestration: PostgreSQL (`pgvector`), Neo4j 5, Redis 7 |
+
+---
+
+### Running Tests Locally
+
+#### Backend Tests & Coverage
+```powershell
 cd backend
-pytest -v
-```
-> **Status**: `32 passed` — Covers PDF parsing, semantic chunking, embedding generation, Cypher query construction, RRF ranking, Pydantic schemas, and API routes.
 
-### Frontend Unit & Component Tests (Vitest)
+# Run all unit and module tests with coverage report
+.venv\Scripts\python.exe -m pytest tests/unit tests/api tests/integration --cov=app --cov-report=term-missing
+
+# Run with coverage threshold verification (>=65%)
+.venv\Scripts\python.exe -m pytest tests/unit tests/api --cov=app --cov-fail-under=65
+
+# Run integration tests specifically
+.venv\Scripts\python.exe -m pytest tests/integration/test_pipeline_integration.py -v
+```
+
+#### Frontend Tests & Coverage
 ```bash
 cd frontend
+
+# Run unit and component test suite
 npm test
-```
-> **Status**: `7 passed` — Covers React rendering, Zustand stores, SSE client streaming parser, and graph canvas bindings.
 
-### Production Build Verification
-```bash
-cd frontend
+# Run tests with Vitest v8 coverage report (>=60% threshold)
+npm run test:cov
+
+# Production build and TypeScript type check
 npm run build
 ```
-> **Status**: Successfully compiles without TypeScript warnings or bundling errors.
+
+---
+
+## 🔄 GitHub Actions CI/CD Architecture
+
+Six automated workflow pipelines are located in `.github/workflows/`:
+
+```text
+.github/workflows/
+├── backend-ci.yml          # Ruff linting, Python 3.12 test matrix, pytest-cov enforcement (>=65%), XML artifacts
+├── frontend-ci.yml         # Oxlint, TypeScript compilation, Vitest test suite with v8 coverage, build validation
+├── integration-tests.yml   # Multi-service pipeline with live PostgreSQL (pgvector), Neo4j 5, and Redis 7 containers
+├── docker-build.yml        # Multi-stage Docker Compose verification and Docker Buildx image compilation
+├── security-checks.yml     # Weekly & PR security scans: pip-audit, Bandit SAST, npm audit, and Gitleaks
+└── cd.yml                  # Manual dispatch (workflow_dispatch) production/staging deployment gate & container publisher
+```
+
+### Workflow Triggers & Execution Matrix
+
+1. **Backend CI (`backend-ci.yml`)**:
+   - Triggers on `push` and `pull_request` affecting `backend/**`.
+   - Sets up Python 3.12, caches `pip` wheels, executes Ruff linting, and runs `pytest` with coverage gate (`--cov-fail-under=65`).
+   - Exports and uploads `coverage.xml` as a GitHub Action artifact.
+
+2. **Frontend CI (`frontend-ci.yml`)**:
+   - Triggers on `push` and `pull_request` affecting `frontend/**`.
+   - Sets up Node.js 20, runs `npm ci`, checks lint with Oxlint, compiles TypeScript (`tsc -b`), validates production bundling (`vite build`), and runs `vitest run --coverage`.
+
+3. **Multi-Database Integration (`integration-tests.yml`)**:
+   - Spawns live container services: `pgvector/pgvector:pg16`, `neo4j:5-community` (with APOC), and `redis:7-alpine`.
+   - Awaits container healthchecks before running database integration tests.
+
+4. **Docker Build Validation (`docker-build.yml`)**:
+   - Validates `backend/docker-compose.yml` syntax.
+   - Builds `backend/Dockerfile.backend` (Python 3.11-slim) and `frontend/Dockerfile` using Buildx with GitHub Actions layer caching.
+
+5. **Security & Vulnerability Scanning (`security-checks.yml`)**:
+   - Scans Python packages with `pip-audit` for known CVEs.
+   - Scans backend codebase for common vulnerabilities using `bandit` SAST.
+   - Audits npm packages using `npm audit`.
+   - Inspects commit histories for exposed API keys or tokens with `gitleaks`.
+
+6. **Continuous Deployment (`cd.yml`)**:
+   - Controlled via manual trigger (`workflow_dispatch`).
+   - Enforces a safety gate for production (`inputs.confirm_production == 'DEPLOY'` and branch must be `main`).
+   - Packages and pushes versioned images to GitHub Container Registry (`ghcr.io`).
+   - Contains an integrated operational runbook and instant rollback protocol.
+
+### Required GitHub Secrets
+
+Configure these secrets in **GitHub Repository Settings → Secrets and variables → Actions**:
+
+| Secret Key | Required For | Description |
+| :--- | :--- | :--- |
+| `GROQ_API_KEY` | E2E Tests / CD | Active Groq Cloud inference API key |
+| `GEMINI_API_KEY` | Fallback LLM | Google Gemini AI studio API key |
+| `JWT_SECRET` | Backend Auth | Secret key used for signing JWT access tokens |
+| `DOCKERHUB_USERNAME` | Container Push (Optional) | Docker Hub registry user (if not using GHCR) |
+| `DOCKERHUB_TOKEN` | Container Push (Optional) | Docker Hub access token or personal access token |
 
 ---
 

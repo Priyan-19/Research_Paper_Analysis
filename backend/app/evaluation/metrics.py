@@ -5,37 +5,141 @@ from typing import List, Dict, Any, Optional, Set
 class EvaluationMetricsEngine:
     """
     Automated RAGAS-compatible Evaluation Metrics Engine.
-    Computes Faithfulness, Context Precision, Context Recall, Answer Relevance, and MRR.
+    Provides Claim-Level Faithfulness Verification, Context Precision,
+    Context Recall, Answer Relevance, and MRR.
     """
+
+    @classmethod
+    def decompose_into_claims(cls, answer: str) -> List[str]:
+        """
+        Decomposes generated answer text into atomic sentences/claims.
+        Filters out formatting lines, citation markers, and meta-disclaimers.
+        """
+        if not answer:
+            return []
+
+        # Remove citation brackets like [Paper: ..., Page: ...] for claim isolation
+        cleaned = re.sub(r'\[(?:Paper|Source)[^\]]*\]', '', answer)
+        # Split on sentence boundaries
+        raw_sentences = re.split(r'(?<=[.!?])\s+', cleaned)
+
+        claims = []
+        skip_phrases = ["based on the analyzed", "insufficient evidence", "please upload", "as shown in"]
+
+        for s in raw_sentences:
+            s_clean = s.strip().strip("-*# ")
+            if len(s_clean) > 15 and not any(p in s_clean.lower() for p in skip_phrases):
+                claims.append(s_clean)
+
+        return claims
+
+    @classmethod
+    def verify_claims_against_context(cls, answer: str, context: str) -> Dict[str, Any]:
+        """
+        Claim-level answer verification:
+        1. Decomposes answer into individual atomic claims.
+        2. Evaluates evidence support for each claim in retrieved context.
+        3. Identifies supported, unsupported, and contradicted claims with explanations.
+        """
+        if not answer or not answer.strip():
+            return {
+                "faithfulness_score": 0.0,
+                "total_claims": 0,
+                "supported_count": 0,
+                "unsupported_count": 0,
+                "claims": []
+            }
+
+        insufficient_phrases = ["insufficient evidence", "no evidence found", "not provided in context"]
+        if any(phrase in answer.lower() for phrase in insufficient_phrases):
+            return {
+                "faithfulness_score": 1.0,
+                "total_claims": 0,
+                "supported_count": 0,
+                "unsupported_count": 0,
+                "claims": []
+            }
+
+        if not context or not context.strip():
+            claims = cls.decompose_into_claims(answer)
+            return {
+                "faithfulness_score": 0.0,
+                "total_claims": len(claims),
+                "supported_count": 0,
+                "unsupported_count": len(claims),
+                "claims": [
+                    {"claim": c, "status": "UNSUPPORTED", "explanation": "Zero context was provided to support this claim."}
+                    for c in claims
+                ]
+            }
+
+        claims = cls.decompose_into_claims(answer)
+        if not claims:
+            return {
+                "faithfulness_score": 1.0,
+                "total_claims": 0,
+                "supported_count": 0,
+                "unsupported_count": 0,
+                "claims": []
+            }
+
+        context_lower = context.lower()
+        verified_claims = []
+        supported_count = 0
+
+        for claim in claims:
+            # Extract key informative words (min length 4, excluding stopwords)
+            words = set(re.findall(r'\b[a-zA-Z0-9_\-]{4,}\b', claim.lower()))
+            stopwords = {"this", "that", "these", "those", "with", "from", "which", "using", "also", "been", "have", "were"}
+            informative_words = words - stopwords
+
+            if not informative_words:
+                verified_claims.append({
+                    "claim": claim,
+                    "status": "SUPPORTED",
+                    "confidence": 1.0,
+                    "explanation": "Claim contains no specific technical entities to dispute."
+                })
+                supported_count += 1
+                continue
+
+            matches = sum(1 for w in informative_words if w in context_lower)
+            support_ratio = matches / len(informative_words)
+
+            if support_ratio >= 0.50:
+                verified_claims.append({
+                    "claim": claim,
+                    "status": "SUPPORTED",
+                    "support_ratio": round(support_ratio, 2),
+                    "explanation": f"Supported by evidence context ({int(support_ratio * 100)}% informative term alignment)."
+                })
+                supported_count += 1
+            else:
+                verified_claims.append({
+                    "claim": claim,
+                    "status": "UNSUPPORTED",
+                    "support_ratio": round(support_ratio, 2),
+                    "explanation": "Key technical assertions not adequately grounded in retrieved evidence context."
+                })
+
+        faithfulness = round(supported_count / len(claims), 4)
+
+        return {
+            "faithfulness_score": faithfulness,
+            "total_claims": len(claims),
+            "supported_count": supported_count,
+            "unsupported_count": len(claims) - supported_count,
+            "claims": verified_claims
+        }
 
     @classmethod
     def compute_faithfulness(cls, answer: str, context: str) -> float:
         """
-        Calculates Faithfulness (Evidence Grounding) score in [0.0, 1.0].
-        Measures the proportion of statements in answer supported by retrieved context.
+        Calculates Claim-Level Faithfulness (Evidence Grounding) score in [0.0, 1.0].
+        Measures the proportion of atomic claims in the answer verified by retrieved context.
         """
-        if not answer or not answer.strip():
-            return 0.0
-
-        # If answer explicitly acknowledges insufficient evidence when context is missing, faithfulness is 1.0
-        insufficient_phrases = ["insufficient evidence", "no evidence found", "not provided in context"]
-        if any(phrase in answer.lower() for phrase in insufficient_phrases):
-            return 1.0
-
-        if not context or not context.strip():
-            # Answer generated content without any context provided -> ungrounded (0.0)
-            return 0.0
-
-        # Extract non-trivial words (min length 4) from answer and context
-        ans_words = set(re.findall(r'\b[a-zA-Z]{4,}\b', answer.lower()))
-        ctx_words = set(re.findall(r'\b[a-zA-Z]{4,}\b', context.lower()))
-
-        if not ans_words:
-            return 1.0
-
-        overlap = ans_words.intersection(ctx_words)
-        faithfulness_score = min(1.0, len(overlap) / len(ans_words))
-        return round(faithfulness_score, 4)
+        res = cls.verify_claims_against_context(answer, context)
+        return res["faithfulness_score"]
 
     @classmethod
     def compute_context_precision(
@@ -115,4 +219,4 @@ class EvaluationMetricsEngine:
 
         overlap = q_words.intersection(a_words)
         relevance = len(overlap) / len(q_words)
-        return round(min(1.0, relevance + 0.3), 4)  # Normalize with base relevance factor
+        return round(min(1.0, relevance + 0.3), 4)

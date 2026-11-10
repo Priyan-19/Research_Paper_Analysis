@@ -1,7 +1,10 @@
+from typing import Optional, Dict, Any
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.postgres import get_db
+from app.services.paper_service import PaperService
+from app.core.security import get_current_user_optional
 from app.embeddings.vector_store import VectorStoreService
 from app.schemas.search import (
     VectorSearchRequest,
@@ -28,8 +31,12 @@ router = APIRouter(tags=["Search Engine"])
 )
 async def search_vector(
     request: VectorSearchRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[Dict[str, Any]] = Depends(get_current_user_optional)
 ):
+    user_id = current_user.get("user_id") if current_user else None
+    if request.paper_id:
+        await PaperService.get_paper_by_id(db, request.paper_id, user_id=user_id)
     search_results = await VectorStoreService.search_vector_similarity(
         db=db,
         query_text=request.query,

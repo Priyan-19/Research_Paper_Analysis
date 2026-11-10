@@ -1,8 +1,10 @@
+from typing import Optional, Dict, Any
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.postgres import get_db
 from app.services.paper_service import PaperService
+from app.core.security import get_current_user_optional
 from app.graph.extractor import GraphExtractor
 from app.graph.neo4j_builder import Neo4jGraphBuilder
 from app.graph.gnn_link_predictor import GNNLinkPredictor
@@ -26,10 +28,12 @@ router = APIRouter(prefix="/graph", tags=["Knowledge Graph Engine"])
 )
 async def extract_paper_graph(
     paper_id: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[Dict[str, Any]] = Depends(get_current_user_optional)
 ):
-    paper = await PaperService.get_paper_by_id(db, paper_id)
-    chunks = await PaperService.get_paper_chunks(db, paper_id)
+    user_id = current_user.get("user_id") if current_user else None
+    paper = await PaperService.get_paper_by_id(db, paper_id, user_id=user_id)
+    chunks = await PaperService.get_paper_chunks(db, paper_id, user_id=user_id)
 
     if not chunks:
         raise HTTPException(
@@ -37,12 +41,9 @@ async def extract_paper_graph(
             detail="No text chunks found for this paper. Please upload a valid PDF paper first."
         )
 
-    # Combine representative text passages (Abstract + Introduction + Key Sections)
-    sample_text = "\n\n".join([c.text for c in chunks[:10]])
-
-    # 1. Extract Entities & Relationships
-    extraction: KnowledgeGraphExtractionResult = await GraphExtractor.extract_graph_from_text(
-        text=sample_text,
+    # 1. Extract Entities & Relationships across full paper chunks
+    extraction: KnowledgeGraphExtractionResult = await GraphExtractor.extract_graph_from_chunks(
+        chunks=chunks,
         paper_id=paper_id,
         paper_title=paper.title or paper.filename
     )
@@ -72,9 +73,11 @@ async def extract_paper_graph(
 )
 async def get_paper_graph(
     paper_id: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[Dict[str, Any]] = Depends(get_current_user_optional)
 ):
-    paper = await PaperService.get_paper_by_id(db, paper_id)
+    user_id = current_user.get("user_id") if current_user else None
+    paper = await PaperService.get_paper_by_id(db, paper_id, user_id=user_id)
     return await Neo4jGraphBuilder.get_paper_graph(
         paper_id=paper_id,
         paper_title=paper.title or paper.filename

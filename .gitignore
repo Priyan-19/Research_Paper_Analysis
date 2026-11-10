@@ -1,5 +1,5 @@
 # ==============================================================================
-# Git Ignore Configuration — LLM + Knowledge Graph Research Assistant
+# Git Ignore Configuration — LLM + Knowledge Graph Research Assistant (v2.0.0)
 # Supports: Python FastAPI Backend + React Vite Frontend + Docker DB Services
 # ==============================================================================
 
@@ -7,17 +7,23 @@
 # 1. Python & Backend Cache / Virtual Environments
 # ------------------------------------------------------------------------------
 __pycache__/
+*/__pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
 .venv/
+*/.venv/
 venv/
+*/venv/
 env/
 ENV/
 .uv/
 .cache/
+CACHEDIR.TAG
+*/CACHEDIR.TAG
 .pytest_cache/
+*/.pytest_cache/
 .coverage
 .coverage.*
 coverage.xml
@@ -36,7 +42,6 @@ node_modules/
 dist/
 dist-ssr/
 */dist/
-coverage/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -79,7 +84,23 @@ neo4j_data/
 redis_data/
 
 # ------------------------------------------------------------------------------
-# 5. Build & Packaging Artifacts
+# 5. Machine Learning Models, Checkpoints & Embeddings Caches
+# ------------------------------------------------------------------------------
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.onnx
+data/models/*
+!data/models/.gitkeep
+backend/data/models/*
+!backend/data/models/.gitkeep
+.huggingface/
+.torch/
+models--*
+
+# ------------------------------------------------------------------------------
+# 6. Build & Packaging Artifacts
 # ------------------------------------------------------------------------------
 build/
 develop-eggs/
@@ -97,7 +118,7 @@ wheels/
 *.egg
 
 # ------------------------------------------------------------------------------
-# 6. IDEs, Editors & Tooling
+# 7. IDEs, Editors, Scratch Directories & Tooling
 # ------------------------------------------------------------------------------
 .vscode/*
 !.vscode/extensions.json
@@ -108,24 +129,29 @@ wheels/
 *.ntvs*
 *.njsproj
 *.sln
+.antigravity/
+.system_generated/
+scratch/
+tmp/
+temp/
 
 # Legacy Streamlit artifacts
 .streamlit/
 backend/.streamlit/
 
 # ------------------------------------------------------------------------------
-# 7. Operating System Artifacts
+# 8. Operating System Artifacts
 # ------------------------------------------------------------------------------
 .DS_Store
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+*.dump
+*.stackdump
 
 # ------------------------------------------------------------------------------
-# 8. Logs & Temporary Scratch Files
+# 9. Logs & Runtime Output
 # ------------------------------------------------------------------------------
 *.log
 logs/
-scratch/
-tmp/
-temp/
+*/logs/

@@ -4,6 +4,9 @@ Ensures zero live database dependencies, zero paid/external LLM API calls, and i
 """
 import os
 import sys
+
+# Guarantee test environment flag is set immediately before any app modules are imported
+os.environ["TESTING"] = "1"
 from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock
 import pytest
@@ -23,6 +26,7 @@ async def _noop_lifespan(application):
 try:
     from app.main import app
     app.router.lifespan_context = _noop_lifespan
+    app.lifespan_context = _noop_lifespan
 except Exception:
     pass
 

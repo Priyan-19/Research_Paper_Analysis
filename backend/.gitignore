@@ -53,10 +53,22 @@ data/uploads/*
 data/processed/*
 !data/processed/.gitkeep
 data/evaluation/benchmark_results.json
+data/models/*
+!data/models/.gitkeep
+
+# ML Models & Checkpoints
+*.pt
+*.pth
+*.bin
+*.safetensors
+.huggingface/
+.torch/
+models--*
 
 # Package Manager Caches & OS
 .uv
 .cache/
+CACHEDIR.TAG
 .DS_Store
 Thumbs.db
 *.log

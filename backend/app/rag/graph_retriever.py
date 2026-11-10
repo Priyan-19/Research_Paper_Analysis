@@ -171,11 +171,23 @@ class GraphRetriever:
         if not entities:
             return [], []
 
-        # Convert entities to lowercase set for flexible matching
-        entity_patterns = [e.lower() for e in entities]
+        # Expand entities with aliases and canonical forms
+        expanded_patterns = set()
+        for e in entities:
+            lower_e = e.lower().strip()
+            expanded_patterns.add(lower_e)
+            canon = EntityCanonicalizer.canonicalize_name(e).lower()
+            if canon:
+                expanded_patterns.add(canon)
+            for alias_key, alias_val in EntityCanonicalizer.ALIAS_MAP.items():
+                if lower_e == alias_key.lower() or lower_e == alias_val.lower():
+                    expanded_patterns.add(alias_key.lower())
+                    expanded_patterns.add(alias_val.lower())
+
+        entity_patterns = list(expanded_patterns)
 
         async with get_neo4j_session() as session:
-            # 1. Query Relationship Edges (1-Hop Traversal)
+            # 1. Query Relationship Edges (1-Hop Traversal) with provenance
             query_1hop = """
             MATCH (src:Entity)-[r]->(tgt:Entity)
             WHERE (toLower(src.name) IN $entity_patterns OR toLower(tgt.name) IN $entity_patterns)
@@ -185,7 +197,9 @@ class GraphRetriever:
                 query_1hop += " AND (r.paper_id = $paper_id OR r.paper_id IS NULL)"
 
             query_1hop += """
-            RETURN src.name AS source, type(r) AS rel_type, tgt.name AS target, r.description AS description, r.paper_id AS paper_id
+            RETURN src.name AS source, type(r) AS rel_type, tgt.name AS target,
+                   r.description AS description, r.paper_id AS paper_id,
+                   r.page_number AS page_number, r.section_name AS section_name, r.chunk_id AS chunk_id
             LIMIT $limit
             """
 
@@ -198,7 +212,10 @@ class GraphRetriever:
                             relation_type=record["rel_type"],
                             target=record["target"],
                             description=record["description"],
-                            paper_id=record["paper_id"]
+                            paper_id=record["paper_id"],
+                            page_number=record.get("page_number"),
+                            section_name=record.get("section_name"),
+                            chunk_id=record.get("chunk_id")
                         )
                     )
             except Exception as e:
@@ -211,20 +228,25 @@ class GraphRetriever:
                 MATCH (src:Entity)-[r1]->(mid:Entity)-[r2]->(tgt:Entity)
                 WHERE (toLower(src.name) IN $entity_patterns OR toLower(tgt.name) IN $entity_patterns)
                   AND type(r1) <> 'MENTIONS' AND type(r2) <> 'MENTIONS'
-                RETURN src.name AS source, type(r1) AS rel_type_1, mid.name AS mid_name, type(r2) AS rel_type_2, tgt.name AS target, r2.description AS description, r2.paper_id AS paper_id
+                RETURN src.name AS source, type(r1) AS rel_type_1, mid.name AS mid_name,
+                       type(r2) AS rel_type_2, tgt.name AS target, r2.description AS description,
+                       r2.paper_id AS paper_id, r2.page_number AS page_number,
+                       r2.section_name AS section_name, r2.chunk_id AS chunk_id
                 LIMIT $limit
                 """
                 try:
                     result_2hop = await session.run(query_2hop, entity_patterns=entity_patterns, limit=remaining_limit)
                     async for record in result_2hop:
-                        # Append 2-hop triple leg
                         triples.append(
                             GraphTripleItem(
                                 source=record["mid_name"],
                                 relation_type=record["rel_type_2"],
                                 target=record["target"],
                                 description=record["description"],
-                                paper_id=record["paper_id"]
+                                paper_id=record["paper_id"],
+                                page_number=record.get("page_number"),
+                                section_name=record.get("section_name"),
+                                chunk_id=record.get("chunk_id")
                             )
                         )
                 except Exception as e:

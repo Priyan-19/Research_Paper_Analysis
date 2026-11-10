@@ -39,9 +39,13 @@ class Paper(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
+    # Ownership & Multi-Tenancy
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+
     # Relationships
     chunks = relationship("Chunk", back_populates="paper", cascade="all, delete-orphan", order_by="Chunk.chunk_index")
     jobs = relationship("ProcessingJob", back_populates="paper", cascade="all, delete-orphan")
+    user = relationship("app.models.user.User", backref="papers", lazy="selectin")
 
 
 class Chunk(Base):

@@ -60,3 +60,37 @@ def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
     except jwt.PyJWTError as e:
         logger.warning(f"Failed to decode token: {str(e)}")
         return None
+
+
+async def get_current_user_optional(
+    token: Optional[str] = Depends(oauth2_scheme)
+) -> Optional[Dict[str, Any]]:
+    """
+    Dependency that optionally extracts the authenticated user payload if a Bearer token is provided.
+    Returns None if no token is provided, preserving backwards-compatibility with unauthenticated workflows.
+    """
+    if not token:
+        return None
+    return decode_access_token(token)
+
+
+async def get_current_user_required(
+    token: Optional[str] = Depends(oauth2_scheme)
+) -> Dict[str, Any]:
+    """
+    Dependency enforcing strict authentication. Raises HTTP 401 if token is missing or invalid.
+    """
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication token is required for this operation.",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    payload = decode_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired access token.",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    return payload

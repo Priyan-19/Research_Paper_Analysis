@@ -1,26 +1,303 @@
 [
   {
-    "id": "q001",
-    "question": "What is Retrieval-Augmented Generation (RAG) and how does it reduce LLM hallucinations?",
-    "target_entities": ["RAG", "LLM", "Hallucinations"],
-    "ground_truth_answer": "Retrieval-Augmented Generation (RAG) combines dense vector retrieval with Generative LLMs to ground answers in external retrieved document passages, reducing hallucinations and grounding responses in evidence."
+    "id": "q01",
+    "category": "single_hop",
+    "question": "What is the primary motivation for introducing the Transformer architecture?",
+    "target_entities": ["Transformer", "Attention Mechanism", "Recurrence", "Convolution"]
   },
   {
-    "id": "q002",
-    "question": "Which models and benchmarks are evaluated on GLUE dataset using BERT?",
-    "target_entities": ["GLUE", "BERT", "Model"],
-    "ground_truth_answer": "BERT is evaluated on the GLUE benchmark suite across natural language understanding tasks including sentiment analysis, question answering, and textual entailment."
+    "id": "q02",
+    "category": "single_hop",
+    "question": "How does self-attention differ from traditional recurrent neural networks?",
+    "target_entities": ["Self-Attention", "RNN", "Parallelization", "Sequential Processing"]
   },
   {
-    "id": "q003",
-    "question": "How does Knowledge Graph traversal improve multi-hop entity reasoning compared to basic vector search?",
-    "target_entities": ["Knowledge Graph", "Vector Search", "Neo4j"],
-    "ground_truth_answer": "Knowledge Graph traversal explicitly models directed relationships between entities (e.g. Paper -> Cites -> Model), enabling multi-hop relational reasoning that vector similarity search alone cannot explicitly model."
+    "id": "q03",
+    "category": "single_hop",
+    "question": "What is the computational complexity per layer of self-attention compared to recurrence?",
+    "target_entities": ["Self-Attention", "Computational Complexity", "O(n^2)", "Sequence Length"]
   },
   {
-    "id": "q004",
-    "question": "What is Reciprocal Rank Fusion (RRF) and how does it merge vector ranks with graph ranks?",
-    "target_entities": ["Reciprocal Rank Fusion", "RRF", "Vector Search", "Graph Search"],
-    "ground_truth_answer": "Reciprocal Rank Fusion (RRF) scores items by summing reciprocal ranks RRF_Score = w_v / (k + rank_v) + w_g / (k + rank_g), enabling robust rank fusion across vector and graph search results."
+    "id": "q04",
+    "category": "single_hop",
+    "question": "What positional encoding scheme is used in the original Transformer?",
+    "target_entities": ["Positional Encoding", "Sinusoidal Functions", "Wavelengths"]
+  },
+  {
+    "id": "q05",
+    "category": "multi_hop",
+    "question": "How do residual connections and layer normalization interact in deep Transformer stacks?",
+    "target_entities": ["Residual Connection", "Layer Normalization", "Gradient Flow", "Degradation"]
+  },
+  {
+    "id": "q06",
+    "category": "multi_hop",
+    "question": "How does multi-head attention enable the model to jointly attend to information from different representation subspaces?",
+    "target_entities": ["Multi-Head Attention", "Subspaces", "Projection Matrices", "Scaled Dot-Product"]
+  },
+  {
+    "id": "q07",
+    "category": "comparative",
+    "question": "Compare BERT masked language modeling with GPT autoregressive pretraining.",
+    "target_entities": ["BERT", "GPT", "Masked Language Modeling", "Autoregressive"]
+  },
+  {
+    "id": "q08",
+    "category": "comparative",
+    "question": "Compare GCN with GraphSAGE for inductive node classification.",
+    "target_entities": ["GCN", "GraphSAGE", "Inductive Learning", "Neighbor Sampling"]
+  },
+  {
+    "id": "q09",
+    "category": "methodology",
+    "question": "What negative sampling strategy is optimal for training link prediction models?",
+    "target_entities": ["Link Prediction", "Negative Sampling", "Adjacency Matrix", "BCE Loss"]
+  },
+  {
+    "id": "q10",
+    "category": "methodology",
+    "question": "How is Reciprocal Rank Fusion calculated across dense and graph retrieval channels?",
+    "target_entities": ["Reciprocal Rank Fusion", "RRF", "Dense Retrieval", "Graph Traversal"]
+  },
+  {
+    "id": "q11",
+    "category": "benchmarks",
+    "question": "What BLEU score did the Transformer base model achieve on WMT 2014 English-to-German?",
+    "target_entities": ["Transformer", "BLEU", "WMT 2014", "Machine Translation"]
+  },
+  {
+    "id": "q12",
+    "category": "benchmarks",
+    "question": "What evaluation metrics are standard for link prediction on scientific knowledge graphs?",
+    "target_entities": ["AUC-ROC", "Average Precision", "MRR", "Hits@K"]
+  },
+  {
+    "id": "q13",
+    "category": "unanswerable",
+    "question": "What is the quantum superposition decay rate of the Transformer model in cryogenic environments?",
+    "target_entities": ["Transformer", "Quantum"]
+  },
+  {
+    "id": "q14",
+    "category": "unanswerable",
+    "question": "How many kilograms of titanium were used in the physical construction of BERT?",
+    "target_entities": ["BERT", "Titanium"]
+  },
+  {
+    "id": "q15",
+    "category": "single_hop",
+    "question": "What is the purpose of scaling the dot products by the square root of the head dimension in attention?",
+    "target_entities": ["Scaled Dot-Product Attention", "Dot Product", "Square Root", "Softmax"]
+  },
+  {
+    "id": "q16",
+    "category": "single_hop",
+    "question": "What optimizer and learning rate schedule was used to train the original Transformer?",
+    "target_entities": ["Adam Optimizer", "Warmup Steps", "Learning Rate Schedule", "Beta Parameters"]
+  },
+  {
+    "id": "q17",
+    "category": "methodology",
+    "question": "What regularization techniques were applied during Transformer training to prevent overfitting?",
+    "target_entities": ["Dropout", "Label Smoothing", "Residual Dropout"]
+  },
+  {
+    "id": "q18",
+    "category": "single_hop",
+    "question": "What is the feed-forward network dimension in the Transformer Base model?",
+    "target_entities": ["Feed-Forward Network", "Dimension", "2048", "Base Model"]
+  },
+  {
+    "id": "q19",
+    "category": "comparative",
+    "question": "How does dense vector similarity compare to BM25 lexical keyword matching for technical entity retrieval?",
+    "target_entities": ["Dense Retrieval", "BM25", "Lexical Matching", "Cosine Distance"]
+  },
+  {
+    "id": "q20",
+    "category": "multi_hop",
+    "question": "How does full-paper chunk-level knowledge graph extraction improve multi-hop reasoning over isolated abstract extraction?",
+    "target_entities": ["Knowledge Graph", "Chunk Extraction", "Multi-Hop", "Provenance"]
+  },
+  {
+    "id": "q21",
+    "category": "single_hop",
+    "question": "What is the role of an entity canonicalizer in scientific knowledge graphs?",
+    "target_entities": ["Canonicalizer", "Synonym Resolution", "Deduplication", "Alias Mapping"]
+  },
+  {
+    "id": "q22",
+    "category": "methodology",
+    "question": "How does version protection in entity resolution prevent merging distinct model checkpoints?",
+    "target_entities": ["Version Protection", "Entity Resolution", "Checkpoints", "Model Disambiguation"]
+  },
+  {
+    "id": "q23",
+    "category": "benchmarks",
+    "question": "What benchmark datasets are standard for evaluating Graph Neural Network node classification?",
+    "target_entities": ["Cora", "Citeseer", "Pubmed", "OGB"]
+  },
+  {
+    "id": "q24",
+    "category": "single_hop",
+    "question": "What is symmetric adjacency normalization in Graph Convolutional Networks?",
+    "target_entities": ["Symmetric Normalization", "Adjacency Matrix", "Degree Matrix", "GCN"]
+  },
+  {
+    "id": "q25",
+    "category": "multi_hop",
+    "question": "Why does adding self-loops to the adjacency matrix prevent vanishing node features in GCNs?",
+    "target_entities": ["Self-Loops", "Adjacency Matrix", "Feature Propagation", "GCN"]
+  },
+  {
+    "id": "q26",
+    "category": "comparative",
+    "question": "What is the difference between TransE and GCN for knowledge graph representation?",
+    "target_entities": ["TransE", "GCN", "Relational Embedding", "Message Passing"]
+  },
+  {
+    "id": "q27",
+    "category": "methodology",
+    "question": "How does PyMuPDF identify table column structures in academic PDFs?",
+    "target_entities": ["PyMuPDF", "find_tables", "Tabular Extraction", "Markdown"]
+  },
+  {
+    "id": "q28",
+    "category": "single_hop",
+    "question": "Under what condition is OCR triggered during PDF ingestion in this system?",
+    "target_entities": ["OCR", "Tesseract", "Threshold", "Scanned Pages"]
+  },
+  {
+    "id": "q29",
+    "category": "numerical",
+    "question": "What is the default vector embedding dimension used by all-MiniLM-L6-v2?",
+    "target_entities": ["Embedding Dimension", "384", "all-MiniLM-L6-v2"]
+  },
+  {
+    "id": "q30",
+    "category": "numerical",
+    "question": "What constant K is commonly used in Reciprocal Rank Fusion?",
+    "target_entities": ["RRF", "Constant K", "60", "Rank Fusion"]
+  },
+  {
+    "id": "q31",
+    "category": "single_hop",
+    "question": "What is the purpose of Cross-Encoder reranking in two-stage retrieval?",
+    "target_entities": ["Cross-Encoder", "Reranking", "Passage Scoring", "Relevance"]
+  },
+  {
+    "id": "q32",
+    "category": "methodology",
+    "question": "How does atomic claim decomposition improve RAG faithfulness evaluation?",
+    "target_entities": ["Claim Decomposition", "Faithfulness", "Atomic Assertions", "Grounding"]
+  },
+  {
+    "id": "q33",
+    "category": "methodology",
+    "question": "How does a citation guardrail eliminate fabricated references in LLM responses?",
+    "target_entities": ["Citation Guard", "Hallucination", "Evidence Binding", "Provenance"]
+  },
+  {
+    "id": "q34",
+    "category": "single_hop",
+    "question": "What is the advantage of asynchronous background processing for document ingestion?",
+    "target_entities": ["Background Tasks", "Non-Blocking", "FastAPI", "Polling"]
+  },
+  {
+    "id": "q35",
+    "category": "multi_hop",
+    "question": "How does tenant isolation operate across PostgreSQL and Neo4j for private research papers?",
+    "target_entities": ["Multi-Tenancy", "Tenant Isolation", "user_id", "Access Control"]
+  },
+  {
+    "id": "q36",
+    "category": "single_hop",
+    "question": "What is the function of the HNSW index in pgvector?",
+    "target_entities": ["HNSW", "pgvector", "Approximate Nearest Neighbor", "Cosine Distance"]
+  },
+  {
+    "id": "q37",
+    "category": "benchmarks",
+    "question": "What BLEU score was achieved by the Transformer Big model on WMT 2014 English-to-French?",
+    "target_entities": ["Transformer Big", "BLEU", "WMT 2014", "English-to-French"]
+  },
+  {
+    "id": "q38",
+    "category": "comparative",
+    "question": "Compare masked self-attention in the decoder with standard self-attention in the encoder.",
+    "target_entities": ["Masked Self-Attention", "Causal Mask", "Encoder", "Decoder"]
+  },
+  {
+    "id": "q39",
+    "category": "methodology",
+    "question": "Why is exponential backoff with jitter necessary when querying commercial LLM endpoints?",
+    "target_entities": ["Exponential Backoff", "Jitter", "Rate Limiting", "HTTP 429"]
+  },
+  {
+    "id": "q40",
+    "category": "single_hop",
+    "question": "What is the role of temperature in LLM structured entity extraction?",
+    "target_entities": ["Temperature", "Determinism", "Extraction", "Greedy Decoding"]
+  },
+  {
+    "id": "q41",
+    "category": "single_hop",
+    "question": "What does APOC provide when integrated with Neo4j for academic graphs?",
+    "target_entities": ["APOC", "Neo4j", "Graph Algorithms", "Procedures"]
+  },
+  {
+    "id": "q42",
+    "category": "multi_hop",
+    "question": "How does combining dense semantic search with Cypher graph traversal prevent false positives in scientific queries?",
+    "target_entities": ["Tri-Hybrid", "Dense Search", "Cypher", "False Positives"]
+  },
+  {
+    "id": "q43",
+    "category": "unanswerable",
+    "question": "What was the room temperature in Celsius inside the lab when the ResNet paper was written?",
+    "target_entities": ["ResNet", "Room Temperature"]
+  },
+  {
+    "id": "q44",
+    "category": "numerical",
+    "question": "How many attention heads were used in the Transformer Base encoder?",
+    "target_entities": ["Attention Heads", "8", "Transformer Base"]
+  },
+  {
+    "id": "q45",
+    "category": "numerical",
+    "question": "How many encoder layers are stacked in the standard Transformer architecture?",
+    "target_entities": ["Encoder Layers", "6", "Depth"]
+  },
+  {
+    "id": "q46",
+    "category": "methodology",
+    "question": "What is the formula for scaled dot-product attention?",
+    "target_entities": ["Softmax", "Q K^T", "sqrt(d_k)", "Attention Formula"]
+  },
+  {
+    "id": "q47",
+    "category": "comparative",
+    "question": "How does GraphSAGE aggregation differ from mean pooling in vanilla GCN?",
+    "target_entities": ["GraphSAGE", "Mean Aggregator", "LSTM Aggregator", "Pooling"]
+  },
+  {
+    "id": "q48",
+    "category": "single_hop",
+    "question": "What is the function of the Redis cache in this research intelligence system?",
+    "target_entities": ["Redis", "Caching", "Task Queue", "Throughput"]
+  },
+  {
+    "id": "q49",
+    "category": "methodology",
+    "question": "How are unanswerable questions detected by the claim-level verification engine?",
+    "target_entities": ["Unanswerable", "Evidence Grounding", "Zero Context", "Faithfulness"]
+  },
+  {
+    "id": "q50",
+    "category": "single_hop",
+    "question": "What is the purpose of cosine distance in high-dimensional vector search?",
+    "target_entities": ["Cosine Distance", "Angular Similarity", "Normalized Vectors", "Metric"]
   }
 ]
+

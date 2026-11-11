@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { fetchPaperDetails } from "../../api/papers";
-import { extractPaperGraph, fetchPaperGraph } from "../../api/graph";
-import { useUIStore } from "../../store/useUIStore";
-import { X, Network, BookOpen, Layers, Loader2, Sparkles } from "lucide-react";
+import { fetchPaperGraph } from "../../api/graph";
+import { X, Network, Loader2 } from "lucide-react";
 import { Badge } from "../ui/Badge";
-import { Button } from "../ui/Button";
 
 interface PaperDetailModalProps {
   paperId: string;
@@ -13,8 +11,6 @@ interface PaperDetailModalProps {
 }
 
 export function PaperDetailModal({ paperId, onClose }: PaperDetailModalProps) {
-  const queryClient = useQueryClient();
-  const { showToast } = useUIStore();
   const [activeTab, setActiveTab] = useState<"metadata" | "chunks" | "graph">("metadata");
 
   // Fetch Paper Details (metadata + chunks)
@@ -24,24 +20,10 @@ export function PaperDetailModal({ paperId, onClose }: PaperDetailModalProps) {
   });
 
   // Fetch Paper Graph
-  const { data: graphData, refetch: refetchGraph } = useQuery({
+  const { data: graphData } = useQuery({
     queryKey: ["paper-graph", paperId],
     queryFn: () => fetchPaperGraph(paperId),
     enabled: activeTab === "graph",
-  });
-
-  // Extract Knowledge Graph Mutation
-  const extractMutation = useMutation({
-    mutationFn: () => extractPaperGraph(paperId),
-    onSuccess: (res) => {
-      showToast(res.message || "Knowledge Graph built in Neo4j!", "success");
-      queryClient.invalidateQueries({ queryKey: ["graph-stats"] });
-      refetchGraph();
-      setActiveTab("graph");
-    },
-    onError: (err: any) => {
-      showToast(err.message || "Failed to extract graph", "error");
-    },
   });
 
   if (isLoading || !paper) {
@@ -181,20 +163,9 @@ export function PaperDetailModal({ paperId, onClose }: PaperDetailModalProps) {
                 <span className="text-xs text-parchment-on-surface-variant font-mono">
                   File: {paper.filename}
                 </span>
-
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => extractMutation.mutate()}
-                  disabled={extractMutation.isPending}
-                >
-                  {extractMutation.isPending ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
-                  ) : (
-                    <Sparkles className="w-3.5 h-3.5 mr-1" />
-                  )}
-                  <span>Extract Knowledge Graph (Neo4j)</span>
-                </Button>
+                <span className="text-xs text-parchment-secondary font-mono">
+                  Auto-indexed (Vector &amp; Neo4j Graph)
+                </span>
               </div>
             </div>
           )}
@@ -231,15 +202,6 @@ export function PaperDetailModal({ paperId, onClose }: PaperDetailModalProps) {
                     {graphData?.total_nodes || 0} entities and {graphData?.total_edges || 0} relationships extracted.
                   </p>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => extractMutation.mutate()}
-                  disabled={extractMutation.isPending}
-                >
-                  <Sparkles className="w-3.5 h-3.5 mr-1" />
-                  <span>Re-extract Graph</span>
-                </Button>
               </div>
 
               {graphData && graphData.nodes.length > 0 ? (
@@ -280,7 +242,7 @@ export function PaperDetailModal({ paperId, onClose }: PaperDetailModalProps) {
                 <div className="text-center p-6 border border-dashed border-parchment-outline-variant">
                   <Network className="w-8 h-8 text-parchment-outline mx-auto mb-2 opacity-50" />
                   <p className="text-xs text-parchment-on-surface-variant">
-                    No graph triples currently built for this paper. Click "Extract Knowledge Graph" above to generate entities with LLM.
+                    No graph triples currently built for this paper. Knowledge entities and relations are automatically extracted during paper ingestion.
                   </p>
                 </div>
               )}

@@ -92,7 +92,21 @@ class PDFLoader:
         """
         path = Path(file_path)
         if not path.exists():
-            raise PDFProcessingError(filename=path.name, reason="File not found on disk.")
+            # Try alternate paths (e.g. backend/ relative or current working directory)
+            candidates = [
+                Path("backend") / file_path,
+                Path("..") / file_path,
+                Path(__file__).resolve().parent.parent.parent / file_path
+            ]
+            found = False
+            for cand in candidates:
+                if cand.exists():
+                    path = cand
+                    file_path = str(cand)
+                    found = True
+                    break
+            if not found:
+                raise PDFProcessingError(filename=path.name, reason="File not found on disk.")
 
         try:
             doc = fitz.open(file_path)

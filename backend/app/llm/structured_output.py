@@ -14,6 +14,11 @@ class StructuredOutputParser:
     Utility parser converting raw LLM JSON strings into validated Pydantic models.
     Handles code block stripping (```json ... ```) and syntax cleanup.
     """
+    @classmethod
+    def parse(cls, raw_text: str, response_schema: Type[T]) -> T:
+        """Alias for parse_json_response."""
+        return cls.parse_json_response(raw_text, response_schema)
+
     @staticmethod
     def parse_json_response(raw_text: str, response_schema: Type[T]) -> T:
         if not raw_text or not raw_text.strip():

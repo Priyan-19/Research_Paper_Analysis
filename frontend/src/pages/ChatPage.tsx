@@ -93,14 +93,18 @@ export function ChatPage() {
       },
       onComplete: (data) => {
         // Construct retrieved sources for Sources panel
-        const sources: RetrievedSource[] = (data.citations || []).map((c, i) => ({
+        const sources: RetrievedSource[] = (data.citations || []).map((c: any, i) => ({
           source_index: i + 1,
-          source_type: data.search_mode === "hybrid" ? "hybrid" : data.search_mode === "graph" ? "graph" : "vector",
+          source_type: c.source_type || (data.search_mode === "graph" ? "graph" : data.search_mode === "hybrid" ? "hybrid" : "vector"),
           paper_id: c.paper_id,
           paper_title: c.paper_title,
           page_number: c.page_number,
           section_name: c.section_name,
           snippet: c.snippet || "Retrieved evidence passage referenced in response.",
+          relationship: c.relationship,
+          source_entity: c.source_entity,
+          target_entity: c.target_entity,
+          score: c.score,
         }));
 
         finalizeAssistantMessage(

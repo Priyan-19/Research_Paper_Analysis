@@ -64,7 +64,10 @@ INSTRUCTIONS:
             return KnowledgeGraphExtractionResult(entities=[], relationships=[])
 
         all_extracted_subgraphs: List[KnowledgeGraphExtractionResult] = []
-        step = max(1, window_size - window_overlap)
+        base_step = max(1, window_size - window_overlap)
+        max_windows = 15
+        step = max(base_step, len(chunks) // max_windows) if len(chunks) > 20 else base_step
+        rate_limited = False
 
         for i in range(0, len(chunks), step):
             window_chunks = chunks[i:i + window_size]
@@ -97,16 +100,21 @@ INSTRUCTIONS:
                 f"Extract all scientific entities and directed relationships from this passage."
             )
 
-            try:
-                llm = get_llm_provider()
-                raw_extraction = await llm.generate_structured(
-                    prompt=prompt,
-                    response_schema=KnowledgeGraphExtractionResult,
-                    system_prompt=cls.EXTRACTION_SYSTEM_PROMPT,
-                    temperature=0.1
-                )
-            except Exception as e:
-                logger.warning(f"Chunk window {i} LLM extraction failed: {str(e)}; falling back to heuristic")
+            if not rate_limited:
+                try:
+                    llm = get_llm_provider()
+                    raw_extraction = await llm.generate_structured(
+                        prompt=prompt,
+                        response_schema=KnowledgeGraphExtractionResult,
+                        system_prompt=cls.EXTRACTION_SYSTEM_PROMPT,
+                        temperature=0.1
+                    )
+                except Exception as e:
+                    logger.warning(f"Chunk window {i} LLM extraction failed: {str(e)}; falling back to heuristic")
+                    if "rate limit" in str(e).lower() or "429" in str(e):
+                        rate_limited = True
+                    raw_extraction = cls._fallback_extraction(snippet, paper_title)
+            else:
                 raw_extraction = cls._fallback_extraction(snippet, paper_title)
 
             # Attach provenance to extracted items

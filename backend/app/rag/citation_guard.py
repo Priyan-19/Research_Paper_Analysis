@@ -20,39 +20,52 @@ class CitationGuard:
         retrieved_sources: List[Dict[str, Any]]
     ) -> List[CitationBadge]:
         """
-        Parses inline citation tags ([Paper X, Page Y], [Source N], [Paper X]) from generated LLM text
-        and resolves them against retrieved source metadata.
+        Parses inline citation tags ([Paper X, Page Y], [Source N], [Evidence Item #N], [Graph: ...])
+        from generated LLM text and resolves them against retrieved source metadata.
         """
-        if not answer_text or not retrieved_sources:
+        if not answer_text or not retrieved_sources or not answer_text.strip():
             return []
 
         badges: List[CitationBadge] = []
         seen_keys = set()
 
-        # Build lookup maps for rapid source resolving
-        paper_id_map: Dict[str, Dict[str, Any]] = {}
+        # Build lookup maps for rapid source resolving (by paper_id, by paper_title, and by 1-based index)
+        paper_lookup: Dict[str, Dict[str, Any]] = {}
         index_map: Dict[int, Dict[str, Any]] = {}
 
         for idx, src in enumerate(retrieved_sources, start=1):
             pid = str(src.get("paper_id", "")).strip()
+            title = str(src.get("paper_title", "")).strip()
             if pid:
-                paper_id_map[pid.lower()] = src
+                paper_lookup[pid.lower()] = src
+            if title:
+                paper_lookup[title.lower()] = src
             index_map[idx] = src
 
-        # Regex Pattern 1: [Paper: <paper_id>, Page: <page_num>] or [Paper <paper_id>, Page <page_num>]
+        # Pattern 1: [Paper: <title_or_id>, Page: <page_num>] or [Paper <title_or_id>]
         pattern_paper_page = re.findall(
-            r'\[Paper:?\s*([a-zA-Z0-9_\-]+)(?:,\s*Page:?\s*(\d+))?(?:,\s*Section:?\s*([^\]]+))?\]',
+            r'\[Paper:?\s*(.*?)(?:,\s*Page:?\s*(\d+))?(?:,\s*Section:?\s*([^\]]+))?\]',
             answer_text,
             re.IGNORECASE
         )
-
         for match in pattern_paper_page:
             pid, page_str, sec_str = match
             pid_clean = pid.strip()
+            if not pid_clean:
+                continue
             page_num = int(page_str) if page_str else None
             sec_name = sec_str.strip() if sec_str else None
 
-            source_meta = paper_id_map.get(pid_clean.lower(), {})
+            # Resolve against lookup
+            source_meta = paper_lookup.get(pid_clean.lower())
+            if not source_meta:
+                for key, val in paper_lookup.items():
+                    if key in pid_clean.lower() or pid_clean.lower() in key:
+                        source_meta = val
+                        break
+
+            source_meta = source_meta or {}
+            real_pid = source_meta.get("paper_id") or pid_clean
             title = source_meta.get("paper_title") or source_meta.get("title") or pid_clean
             page = page_num or source_meta.get("page_number")
             sec = sec_name or source_meta.get("section_name")
@@ -63,22 +76,31 @@ class CitationGuard:
                 tag_str += f", Page: {page}"
             tag_str += "]"
 
-            dedup_key = f"{pid_clean}_{page}_{sec}".lower()
+            dedup_key = f"{real_pid}_{page}_{sec}".lower()
             if dedup_key not in seen_keys:
                 seen_keys.add(dedup_key)
                 badges.append(
                     CitationBadge(
-                        paper_id=pid_clean,
+                        paper_id=real_pid,
                         paper_title=title,
                         page_number=page,
                         section_name=sec,
                         citation_tag=tag_str,
-                        snippet=snippet[:200] if snippet else None
+                        snippet=snippet[:300] if snippet else None,
+                        source_type=source_meta.get("source_type", "hybrid"),
+                        relationship=source_meta.get("relationship"),
+                        source_entity=source_meta.get("source_entity"),
+                        target_entity=source_meta.get("target_entity"),
+                        score=source_meta.get("score")
                     )
                 )
 
-        # Regex Pattern 2: [Source N]
-        pattern_source_idx = re.findall(r'\[Source\s*(\d+)\]', answer_text, re.IGNORECASE)
+        # Pattern 2: [Source N] or [Evidence Item #N] or [Evidence Item N] or [Evidence N]
+        pattern_source_idx = re.findall(
+            r'\[(?:Source|Evidence\s*Item|Evidence)\s*#?:?\s*(\d+)\]',
+            answer_text,
+            re.IGNORECASE
+        )
         for idx_str in pattern_source_idx:
             idx = int(idx_str)
             if idx in index_map:
@@ -100,12 +122,42 @@ class CitationGuard:
                             page_number=page,
                             section_name=sec,
                             citation_tag=tag_str,
-                            snippet=snippet[:200] if snippet else None
+                            snippet=snippet[:300] if snippet else None,
+                            source_type=src.get("source_type", "hybrid"),
+                            relationship=src.get("relationship"),
+                            source_entity=src.get("source_entity"),
+                            target_entity=src.get("target_entity"),
+                            score=src.get("score")
                         )
                     )
 
-        # Citation Integrity: Do not silently assign unrelated top-ranked documents as citations.
-        # Citations are strictly emitted only when explicitly grounded in the text and resolved to sources.
+        # Pattern 3: [Graph: (A) -> [REL] -> (B)] or [Graph: A REL B]
+        pattern_graph = re.findall(r'\[Graph:?\s*([^\]]+)\]', answer_text, re.IGNORECASE)
+        for g_match in pattern_graph:
+            g_str = g_match.strip()
+            tag_str = f"[Graph: {g_str}]"
+            if tag_str.lower() not in seen_keys:
+                seen_keys.add(tag_str.lower())
+                matched_src = next(
+                    (s for s in retrieved_sources if s.get("source_type") == "graph" and (s.get("relationship") or "") in g_str),
+                    None
+                )
+                badges.append(
+                    CitationBadge(
+                        paper_id=matched_src.get("paper_id", "graph_rel") if matched_src else "graph_rel",
+                        paper_title=matched_src.get("paper_title", "Knowledge Graph Network") if matched_src else "Knowledge Graph Network",
+                        page_number=None,
+                        section_name="Knowledge Graph",
+                        citation_tag=tag_str,
+                        snippet=f"Neo4j Knowledge Relation: {g_str}",
+                        source_type="graph",
+                        relationship=matched_src.get("relationship") if matched_src else g_str,
+                        source_entity=matched_src.get("source_entity") if matched_src else None,
+                        target_entity=matched_src.get("target_entity") if matched_src else None,
+                        score=matched_src.get("score") if matched_src else None
+                    )
+                )
+
         return badges
 
     @classmethod

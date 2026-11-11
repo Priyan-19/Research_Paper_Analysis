@@ -161,6 +161,30 @@ class GroundedChatService:
                 answer_text=answer_text,
                 retrieved_sources=retrieved_sources
             )
+            # Grounded Evidence Guarantee: If answer was generated from evidence but LLM omitted bracketed tags,
+            # ensure evidence appears in the UI Inspector panel using retrieved sources:
+            if not citations and retrieved_sources:
+                for idx, src in enumerate(retrieved_sources[:request.top_k], start=1):
+                    pid = str(src.get("paper_id", f"src_{idx}")).strip()
+                    title = src.get("paper_title") or src.get("title") or pid
+                    page = src.get("page_number")
+                    sec = src.get("section_name")
+                    snippet = src.get("text") or src.get("snippet")
+                    citations.append(
+                        CitationBadge(
+                            paper_id=pid,
+                            paper_title=title,
+                            page_number=page,
+                            section_name=sec,
+                            citation_tag=f"[Source {idx}]",
+                            snippet=snippet[:300] if snippet else None,
+                            source_type=src.get("source_type", "hybrid"),
+                            relationship=src.get("relationship"),
+                            source_entity=src.get("source_entity"),
+                            target_entity=src.get("target_entity"),
+                            score=src.get("score")
+                        )
+                    )
 
         elapsed = time.time() - start_time
         logger.info(f"Completed Grounded Chat in {elapsed:.2f}s with {len(citations)} citations extracted.")

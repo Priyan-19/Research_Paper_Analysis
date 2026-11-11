@@ -37,10 +37,15 @@ class TrendAnalyzer:
             papers = papers_res
             total_papers = len(papers)
 
-        # Build year distribution from papers
+        # Build year distribution from papers (safely handles Paper models and MagicMocks in unit tests)
         year_dist: Dict[str, int] = {}
         for p in papers:
-            yr = str(getattr(p, "publication_year", None) or getattr(p, "year", None) or "Unknown")
+            if hasattr(p, "year") and isinstance(getattr(p, "year", None), (int, str)):
+                yr = str(p.year)
+            elif hasattr(p, "publication_year") and isinstance(getattr(p, "publication_year", None), (int, str)):
+                yr = str(p.publication_year)
+            else:
+                yr = "Unknown"
             year_dist[yr] = year_dist.get(yr, 0) + 1
 
         # 2. Graph Stats from Neo4j

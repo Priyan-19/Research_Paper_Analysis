@@ -264,34 +264,47 @@ class HybridRetriever:
         graph_response: GraphSearchResponse
     ) -> str:
         """
-        Synthesizes structured context combining text chunks with page/section provenance
+        Synthesizes structured Markdown context combining top RRF text chunks, page/section provenance,
         and Knowledge Graph relational facts.
         """
-        context_parts = []
+        if not items and not graph_response.connected_papers and not graph_response.triples:
+            return "No relevant hybrid vector chunks or graph facts were found for this query."
 
-        # Part 1: Knowledge Graph Triples & Structure
+        lines = ["=== HYBRID RAG CONTEXT (VECTOR RETRIEVAL + KNOWLEDGE GRAPH FUSION) ==="]
+
+        # Section 1: Connected Papers
+        if graph_response.connected_papers:
+            lines.append("\n[CONNECTED RESEARCH PAPERS]")
+            for p in graph_response.connected_papers:
+                lines.append(f"- Paper Title: '{p.paper_title}' (ID: {p.paper_id}) [Mentions {p.matched_entity_count} query entities]")
+
+        # Section 2: Knowledge Graph Triples
         if graph_response.triples:
-            context_parts.append("=== KNOWLEDGE GRAPH RELATIONAL TRIPLES ===")
+            lines.append("\n=== KNOWLEDGE GRAPH RELATIONAL TRIPLES ===")
             for idx, t in enumerate(graph_response.triples[:8], start=1):
                 triple_desc = f"{idx}. ({t.source}) -[:{t.relation_type}]-> ({t.target})"
                 if t.description:
                     triple_desc += f" : {t.description}"
                 if getattr(t, "page_number", None):
                     triple_desc += f" [Page {t.page_number}]"
-                context_parts.append(triple_desc)
-            context_parts.append("")
+                lines.append(triple_desc)
 
-        # Part 2: Retrieved Document Passages
-        chunks = [it for it in items if it.item_type == "vector_chunk"]
-        if chunks:
-            context_parts.append("=== RETRIEVED DOCUMENT PASSAGES ===")
-            for idx, c in enumerate(chunks, start=1):
-                pid = c.paper_id or "doc"
-                page = c.metadata.get("page_number", "N/A")
-                sec = c.metadata.get("section_name", "General")
-                title = c.metadata.get("paper_title", pid)
-                context_parts.append(
-                    f"\n[Source {idx} | Paper: {pid} | Title: {title} | Page: {page} | Section: {sec}]\n{c.content}"
+        # Section 3: Hybrid RRF Ranked Context Items
+        lines.append("\n[TOP RRF RANKED EVIDENCE]")
+        for idx, item in enumerate(items, start=1):
+            if item.item_type == "vector_chunk":
+                sec = item.metadata.get("section_name", "General") if item.metadata else "General"
+                page = item.metadata.get("page_number", 1) if item.metadata else 1
+                paper_title = (item.metadata.get("paper_title") if item.metadata else None) or item.paper_id
+                lines.append(
+                    f"\n[Evidence Item #{idx} | Vector Chunk | Paper: {paper_title} | Page {page} | Section: {sec} | RRF Score: {item.rrf_score}]\n"
+                    f"{item.content}"
+                )
+            elif item.item_type == "graph_triple":
+                pid = f" | Paper: {item.paper_id}" if item.paper_id else ""
+                lines.append(
+                    f"\n[Evidence Item #{idx} | Graph Relationship{pid} | RRF Score: {item.rrf_score}]\n"
+                    f"- {item.content}"
                 )
 
-        return "\n".join(context_parts).strip()
+        return "\n".join(lines).strip()

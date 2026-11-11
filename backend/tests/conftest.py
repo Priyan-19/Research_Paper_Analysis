@@ -7,6 +7,9 @@ import sys
 
 # Guarantee test environment flag is set immediately before any app modules are imported
 os.environ["TESTING"] = "1"
+os.environ["HF_HUB_OFFLINE"] = "1"
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 import atexit
 import logging
 from contextlib import asynccontextmanager
@@ -64,6 +67,7 @@ def mock_db_lifespan(monkeypatch):
     monkeypatch.setattr("app.database.neo4j.neo4j_client.close", AsyncMock(return_value=None))
     monkeypatch.setattr("app.database.redis.redis_client.connect", AsyncMock(return_value=None))
     monkeypatch.setattr("app.database.redis.redis_client.close", AsyncMock(return_value=None))
+    monkeypatch.setattr("app.services.paper_service.PaperService.process_paper_background", AsyncMock(return_value=None))
 
 
 @pytest.fixture(autouse=True)

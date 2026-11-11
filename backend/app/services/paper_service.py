@@ -307,6 +307,7 @@ class PaperService:
             async with get_neo4j_session() as session:
                 await session.run("MATCH ()-[r]->() WHERE r.paper_id = $paper_id DELETE r", paper_id=paper_id)
                 await session.run("MATCH (p:Paper {id: $paper_id}) DETACH DELETE p", paper_id=paper_id)
+                await session.run("MATCH (e:Entity) WHERE NOT (e)--() DETACH DELETE e")
         except Exception as neo_err:
             logger.warning(f"Neo4j cleanup warning for paper {paper_id}: {neo_err}")
 

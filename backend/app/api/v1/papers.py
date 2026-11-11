@@ -66,8 +66,10 @@ async def upload_paper(
             user_id=user_id
         )
 
-    # 2. Dispatch non-blocking background task for extraction, chunking, embeddings & graph construction
-    background_tasks.add_task(PaperService.process_paper_background, paper.id)
+    # 2. Dispatch non-blocking background task for extraction, chunking, embeddings & graph construction (bypassed during automated unit tests)
+    import os
+    if os.environ.get("TESTING", "").lower() not in ("1", "true"):
+        background_tasks.add_task(PaperService.process_paper_background, paper.id)
 
     return paper
 

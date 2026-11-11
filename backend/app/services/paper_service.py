@@ -67,11 +67,11 @@ class PaperService:
         with open(file_path, "wb") as f:
             f.write(file_bytes)
 
-        # Create Paper Record
+        # Create Paper Record with absolute resolved file path to prevent working directory mismatch
         paper = Paper(
             id=paper_id,
             filename=original_filename,
-            file_path=str(file_path),
+            file_path=str(file_path.resolve()),
             file_size_bytes=file_size,
             file_hash=file_hash,
             user_id=user_id,

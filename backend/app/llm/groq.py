@@ -58,6 +58,14 @@ class GroqProvider(BaseLLMProvider):
                         return response.json()
 
                     # Handle Rate Limiting (429) or Transient Server Errors (5xx)
+                    if response.status_code == 429:
+                        retry_after = response.headers.get("retry-after")
+                        if retry_after and retry_after.isdigit() and int(retry_after) > 10:
+                            raise LLMProviderError(
+                                provider="Groq",
+                                message=f"Groq API rate limit exhausted (retry-after: {retry_after}s)."
+                            )
+
                     if response.status_code in (429, 502, 503, 504) and attempt < self.max_retries:
                         backoff = (2 ** attempt) + random.uniform(0.1, 0.5)
                         logger.warning(

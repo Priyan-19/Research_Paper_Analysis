@@ -189,8 +189,23 @@ class PaperService:
                     from app.graph.extractor import GraphExtractor
                     from app.graph.neo4j_builder import Neo4jGraphBuilder
 
+                    # Prepare plain chunk dictionaries to avoid SQLAlchemy AsyncSession detachment/expiry
+                    chunks_payload = [
+                        {
+                            "id": chunk.id,
+                            "chunk_id": chunk.id,
+                            "chunk_index": cdata.chunk_index,
+                            "page_number": cdata.page_number,
+                            "section_name": cdata.section_name,
+                            "text": cdata.text,
+                            "char_length": cdata.char_length,
+                            "token_count": cdata.token_count
+                        }
+                        for chunk, cdata in zip(chunks, chunk_datas)
+                    ]
+
                     extraction = await GraphExtractor.extract_graph_from_chunks(
-                        chunks=chunks,
+                        chunks=chunks_payload,
                         paper_id=paper_id,
                         paper_title=paper.title or paper.filename
                     )
@@ -199,9 +214,12 @@ class PaperService:
                         paper_title=paper.title or paper.filename,
                         graph_data=extraction
                     )
-                    logger.info(f"[Background Task] Persisted {len(extraction.entities)} entities and {len(extraction.relationships)} edges to Neo4j.")
+                    logger.info(
+                        f"[Background Task] Persisted {len(extraction.entities)} entities and "
+                        f"{len(extraction.relationships)} edges to Neo4j for paper '{paper.filename}' ({paper_id})."
+                    )
                 except Exception as graph_err:
-                    logger.warning(f"[Background Task] Knowledge Graph build warning for {paper_id}: {graph_err}")
+                    logger.error(f"[Background Task] Knowledge Graph build error for {paper_id}: {graph_err}", exc_info=True)
 
                 # 6. Mark Completed
                 paper.status = ProcessingStatus.COMPLETED
@@ -219,21 +237,6 @@ class PaperService:
                 job.current_step = "Failed"
                 await db.commit()
                 logger.error(f"[Background Task] Processing failed for paper {paper_id}: {str(e)}")
-
-    @staticmethod
-    async def process_and_save_paper(
-        db: AsyncSession,
-        file_bytes: bytes,
-        original_filename: str,
-        user_id: Optional[str] = None
-    ) -> Paper:
-        """
-        Synchronous wrapper for legacy callers and direct script executions.
-        """
-        paper = await PaperService.save_paper_initial(db, file_bytes, original_filename, user_id=user_id)
-        await PaperService.process_paper_background(paper.id)
-        await db.refresh(paper)
-        return paper
 
     @staticmethod
     async def list_papers(

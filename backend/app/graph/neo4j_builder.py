@@ -57,20 +57,28 @@ class Neo4jGraphBuilder:
             for rel in graph_data.relationships:
                 rel_type = rel.relation_type.value if hasattr(rel.relation_type, 'value') else str(rel.relation_type)
                 
-                # Cypher query with dynamic relationship predicate type
+                # Cypher query with dynamic relationship predicate type and provenance
                 create_rel_query = f"""
                 MATCH (src:Entity {{name: $src_name}})
                 MATCH (tgt:Entity {{name: $tgt_name}})
                 MERGE (src)-[r:{rel_type}]->(tgt)
-                ON CREATE SET r.description = $description, r.paper_id = $paper_id
-                ON MATCH SET r.description = COALESCE(r.description, $description), r.paper_id = COALESCE(r.paper_id, $paper_id)
+                ON CREATE SET r.description = $description, r.paper_id = $paper_id,
+                              r.page_number = $page_number, r.section_name = $section_name, r.chunk_id = $chunk_id
+                ON MATCH SET r.description = COALESCE(r.description, $description),
+                             r.paper_id = COALESCE(r.paper_id, $paper_id),
+                             r.page_number = COALESCE(r.page_number, $page_number),
+                             r.section_name = COALESCE(r.section_name, $section_name),
+                             r.chunk_id = COALESCE(r.chunk_id, $chunk_id)
                 """
                 await session.run(
                     create_rel_query,
                     src_name=rel.source_entity,
                     tgt_name=rel.target_entity,
                     description=rel.description or "",
-                    paper_id=paper_id
+                    paper_id=rel.paper_id or paper_id,
+                    page_number=rel.page_number,
+                    section_name=rel.section_name,
+                    chunk_id=rel.chunk_id
                 )
 
             logger.info(

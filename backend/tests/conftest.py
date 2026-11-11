@@ -4,9 +4,30 @@ Ensures zero live database dependencies, zero paid/external LLM API calls, and i
 """
 import os
 import sys
+
+# Guarantee test environment flag is set immediately before any app modules are imported
+os.environ["TESTING"] = "1"
+os.environ["HF_HUB_OFFLINE"] = "1"
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+import atexit
+import logging
 from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock
 import pytest
+
+# Silence httpcore / httpx / huggingface_hub debug logs that can write to closed stdout/stderr at teardown
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("huggingface_hub").setLevel(logging.WARNING)
+
+# Prevent huggingface_hub close_session from executing via atexit after pytest closes stdout/stderr
+try:
+    from huggingface_hub.utils import _http
+    if hasattr(_http, "close_session"):
+        atexit.unregister(_http.close_session)
+except Exception:
+    pass
 
 # Ensure backend root is on sys.path
 backend_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -23,6 +44,7 @@ async def _noop_lifespan(application):
 try:
     from app.main import app
     app.router.lifespan_context = _noop_lifespan
+    app.lifespan_context = _noop_lifespan
 except Exception:
     pass
 
@@ -45,6 +67,7 @@ def mock_db_lifespan(monkeypatch):
     monkeypatch.setattr("app.database.neo4j.neo4j_client.close", AsyncMock(return_value=None))
     monkeypatch.setattr("app.database.redis.redis_client.connect", AsyncMock(return_value=None))
     monkeypatch.setattr("app.database.redis.redis_client.close", AsyncMock(return_value=None))
+    monkeypatch.setattr("app.services.paper_service.PaperService.process_paper_background", AsyncMock(return_value=None))
 
 
 @pytest.fixture(autouse=True)
@@ -197,3 +220,13 @@ def sample_graph_data():
             GraphRelationship(source_entity="BERT", target_entity="GLUE", relation_type=RelationType.EVALUATED_ON, description="Evaluated on GLUE")
         ]
     )
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Cleanly close any open huggingface / httpx sessions while stdout/stderr are still valid."""
+    try:
+        from huggingface_hub.utils import _http
+        if hasattr(_http, "close_session"):
+            _http.close_session()
+    except Exception:
+        pass

@@ -98,8 +98,10 @@ async def init_postgres_extensions():
     try:
         async with AsyncSessionLocal() as session:
             await session.execute(text("ALTER TABLE papers ADD COLUMN IF NOT EXISTS file_hash VARCHAR(64);"))
+            await session.execute(text("ALTER TABLE papers ADD COLUMN IF NOT EXISTS user_id VARCHAR(36) REFERENCES users(id) ON DELETE SET NULL;"))
+            await session.execute(text("CREATE INDEX IF NOT EXISTS ix_papers_user_id ON papers (user_id);"))
             await session.commit()
-            logger.info("Successfully ensured 'file_hash' column exists on 'papers' table.")
+            logger.info("Successfully ensured 'file_hash' and 'user_id' columns exist on 'papers' table.")
     except Exception as e:
-        logger.warning(f"Could not automatically ensure 'file_hash' column on papers table: {str(e)}")
+        logger.warning(f"Could not automatically ensure migration columns on papers table: {str(e)}")
 

@@ -18,7 +18,7 @@ For full system overview and backend documentation, please see the [Root README]
    - Paper scope filtering (query across all papers or restrict to a single PDF).
 
 2. **Research Papers Index (`/papers`)**:
-   - Drag-and-drop PDF paper uploader with real-time processing status.
+   - Drag-and-drop PDF paper uploader with non-blocking asynchronous processing and real-time step polling (`GET /api/v1/papers/{id}/status`).
    - Ingested paper repository table showing metadata (authors, year, page count, file size, processing status).
    - Paper details modal displaying extracted abstracts, sections, and chunk breakdown.
 
@@ -165,3 +165,15 @@ frontend/
 ├── Dockerfile           # Production NGINX web server container
 └── nginx.conf           # SPA routing & reverse proxy configuration
 ```
+
+---
+
+<div align="center">
+
+Built with 🌿 for Academic Research Intelligence
+
+Developed by **[Priyan-19](https://github.com/Priyan-19)**
+
+© 2026 Academic Research Intelligence System. All Rights Reserved.
+
+</div>

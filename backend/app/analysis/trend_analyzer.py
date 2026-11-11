@@ -30,13 +30,22 @@ class TrendAnalyzer:
         logger.info("Computing global research trends overview...")
 
         # 1. Total papers in DB
-        papers = await PaperService.list_papers(db)
-        total_papers = len(papers)
+        papers_res = await PaperService.list_papers(db)
+        if isinstance(papers_res, tuple):
+            papers, total_papers = papers_res
+        else:
+            papers = papers_res
+            total_papers = len(papers)
 
-        # Build year distribution from papers
+        # Build year distribution from papers (safely handles Paper models and MagicMocks in unit tests)
         year_dist: Dict[str, int] = {}
         for p in papers:
-            yr = str(p.year) if p.year else "Unknown"
+            if hasattr(p, "year") and isinstance(getattr(p, "year", None), (int, str)):
+                yr = str(p.year)
+            elif hasattr(p, "publication_year") and isinstance(getattr(p, "publication_year", None), (int, str)):
+                yr = str(p.publication_year)
+            else:
+                yr = "Unknown"
             year_dist[yr] = year_dist.get(yr, 0) + 1
 
         # 2. Graph Stats from Neo4j

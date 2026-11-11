@@ -65,6 +65,9 @@ class GraphTripleItem(BaseModel):
     target: str = Field(..., description="Target entity canonical name")
     description: Optional[str] = Field(None, description="Contextual relationship description")
     paper_id: Optional[str] = Field(None, description="Associated paper ID if applicable")
+    page_number: Optional[int] = Field(None, description="Page number where relationship was asserted")
+    section_name: Optional[str] = Field(None, description="Section where relationship was asserted")
+    chunk_id: Optional[str] = Field(None, description="Source chunk ID provenance")
 
 
 class ConnectedPaperItem(BaseModel):

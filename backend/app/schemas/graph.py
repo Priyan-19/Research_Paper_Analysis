@@ -28,6 +28,9 @@ class GraphEntity(BaseModel):
     name: str = Field(..., description="Canonical entity name")
     type: EntityType = Field(..., description="Entity classification type")
     description: Optional[str] = Field(None, description="Short contextual definition or summary")
+    page_number: Optional[int] = Field(None, description="Page number where entity was extracted")
+    section_name: Optional[str] = Field(None, description="Section where entity was extracted")
+    chunk_id: Optional[str] = Field(None, description="Source chunk ID provenance")
 
 
 class GraphRelationship(BaseModel):
@@ -35,6 +38,10 @@ class GraphRelationship(BaseModel):
     target_entity: str = Field(..., description="Target entity name")
     relation_type: RelationType = Field(..., description="Directed relationship predicate type")
     description: Optional[str] = Field(None, description="Brief explanation of the relationship")
+    page_number: Optional[int] = Field(None, description="Page number where relationship was extracted")
+    section_name: Optional[str] = Field(None, description="Section where relationship was extracted")
+    chunk_id: Optional[str] = Field(None, description="Source chunk ID provenance")
+    paper_id: Optional[str] = Field(None, description="Associated paper ID")
 
 
 class KnowledgeGraphExtractionResult(BaseModel):

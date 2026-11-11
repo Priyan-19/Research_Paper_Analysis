@@ -73,6 +73,11 @@ class CitationBadge(BaseModel):
     section_name: Optional[str] = Field(None, description="Paper section name")
     citation_tag: str = Field(..., description="Inline citation tag string in generated text")
     snippet: Optional[str] = Field(None, description="Relevant source snippet")
+    source_type: Optional[str] = Field(None, description="Evidence type: 'vector', 'graph', 'hybrid'")
+    relationship: Optional[str] = Field(None, description="Graph relation type")
+    source_entity: Optional[str] = Field(None, description="Graph source entity")
+    target_entity: Optional[str] = Field(None, description="Graph target entity")
+    score: Optional[float] = Field(None, description="Similarity or RRF score")
 
     model_config = ConfigDict(from_attributes=True)
 

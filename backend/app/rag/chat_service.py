@@ -51,13 +51,19 @@ class GroundedChatService:
             retrieved_context_str = hybrid_res.unified_hybrid_context
             raw_items = hybrid_res.results
             for idx, item in enumerate(hybrid_res.results, start=1):
+                is_graph = item.item_type == "graph_triple"
                 retrieved_sources.append({
                     "source_index": idx,
-                    "paper_id": item.paper_id or "doc_001",
-                    "paper_title": item.metadata.get("paper_title") or item.paper_id or "Research Paper",
+                    "paper_id": item.paper_id or ("graph_001" if is_graph else "doc_001"),
+                    "paper_title": item.metadata.get("paper_title") or ("Knowledge Graph Network" if is_graph else (item.paper_id or "Research Paper")),
                     "page_number": item.metadata.get("page_number"),
-                    "section_name": item.metadata.get("section_name"),
-                    "text": item.content
+                    "section_name": item.metadata.get("section_name") or ("Knowledge Graph" if is_graph else None),
+                    "text": item.content,
+                    "source_type": "graph" if is_graph else "hybrid",
+                    "score": getattr(item, "rrf_score", None),
+                    "relationship": item.metadata.get("relation_type"),
+                    "source_entity": item.metadata.get("source_entity"),
+                    "target_entity": item.metadata.get("target_entity"),
                 })
 
         elif request.search_mode == SearchModeEnum.VECTOR:
@@ -76,11 +82,13 @@ class GroundedChatService:
                 retrieved_sources.append({
                     "source_index": idx,
                     "paper_id": c.paper_id,
-                    "paper_title": c.paper_id,
+                    "paper_title": getattr(c, "paper_title", None) or c.paper_id,
                     "page_number": c.page_number,
                     "section_name": c.section_name,
                     "text": c.text,
-                    "chunk_id": c.chunk_id
+                    "chunk_id": c.chunk_id,
+                    "source_type": "vector",
+                    "score": getattr(c, "similarity_score", None),
                 })
             retrieved_context_str = "\n".join(context_lines)
 
@@ -100,7 +108,12 @@ class GroundedChatService:
                     "paper_title": t.paper_id or "Graph Knowledge Network",
                     "page_number": None,
                     "section_name": "Knowledge Graph",
-                    "text": f"({t.source}) --[{t.relation_type}]--> ({t.target})"
+                    "text": f"({t.source}) --[{t.relation_type}]--> ({t.target})",
+                    "source_type": "graph",
+                    "relationship": t.relation_type,
+                    "source_entity": t.source,
+                    "target_entity": t.target,
+                    "score": getattr(t, "score", None),
                 })
 
         # Step 2: Evidence Sufficiency Guardrail Check

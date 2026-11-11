@@ -27,6 +27,25 @@ export function Header() {
   const currentConv = conversations.find((c) => c.id === activeConversationId);
   const activeTitle = currentConv?.title || "New Research Inquiry";
 
+  const lastAssistantWithSources = [...(currentConv?.messages || [])]
+    .reverse()
+    .find((m) => m.role === "assistant" && m.retrieved_sources && m.retrieved_sources.length > 0);
+
+  const displaySourcesCount = activeSourcesList.length > 0
+    ? activeSourcesList.length
+    : (lastAssistantWithSources?.retrieved_sources?.length || 0);
+
+  const handleToggleSources = () => {
+    if (isSourcesPanelOpen) {
+      closeSourcesPanel();
+    } else {
+      const sourcesToOpen = activeSourcesList.length > 0
+        ? activeSourcesList
+        : (lastAssistantWithSources?.retrieved_sources || []);
+      openSourcesPanel(sourcesToOpen);
+    }
+  };
+
   const handleQuickNewChat = () => {
     const id = createConversation();
     selectConversation(id);
@@ -151,7 +170,7 @@ export function Header() {
 
         {/* Evidence Sources Button with Count Badge */}
         <button
-          onClick={() => (isSourcesPanelOpen ? closeSourcesPanel() : openSourcesPanel())}
+          onClick={handleToggleSources}
           className={cn(
             "inline-flex items-center gap-2 px-3 py-1 text-xs font-serif border transition-all cursor-pointer",
             isSourcesPanelOpen
@@ -162,7 +181,7 @@ export function Header() {
         >
           <PanelRight className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Evidence Sources</span>
-          {activeSourcesList.length > 0 && (
+          {displaySourcesCount > 0 && (
             <span
               className={cn(
                 "font-mono text-[10px] px-1.5 py-0.2",
@@ -171,7 +190,7 @@ export function Header() {
                   : "bg-parchment-secondary-container text-parchment-on-secondary-container font-medium"
               )}
             >
-              {activeSourcesList.length}
+              {displaySourcesCount}
             </span>
           )}
         </button>

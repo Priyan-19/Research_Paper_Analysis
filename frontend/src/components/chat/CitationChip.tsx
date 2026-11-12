@@ -17,13 +17,12 @@ export function CitationChip({ tag, citation, allCitations }: CitationChipProps)
   const badge =
     citation ||
     allCitations?.find((c) => {
-      const cleanTag = tag.replace(/[[\]]/g, "").trim().toLowerCase();
-      const cTag = (c.citation_tag || "").replace(/[[\]]/g, "").trim().toLowerCase();
+      const cleanTag = (tag || "").replace(/[[\]]/g, "").trim().toLowerCase();
+      const cTag = (c?.citation_tag || "").replace(/[[\]]/g, "").trim().toLowerCase();
+      if (!cleanTag) return false;
       return (
-        cTag === cleanTag ||
-        cleanTag.includes(cTag) ||
-        cTag.includes(cleanTag) ||
-        (c.paper_title && cleanTag.includes(c.paper_title.toLowerCase()))
+        (cTag && (cTag === cleanTag || cleanTag.includes(cTag) || cTag.includes(cleanTag))) ||
+        (c?.paper_title && cleanTag.includes(c.paper_title.toLowerCase()))
       );
     }) ||
     allCitations?.[0];

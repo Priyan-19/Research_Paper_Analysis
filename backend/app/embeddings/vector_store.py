@@ -149,8 +149,18 @@ class VectorStoreService:
             return []
 
         tokens = re.findall(r'\b[a-zA-Z0-9_\-]{2,}\b', query_text.lower())
-        stopwords = {"what", "which", "where", "when", "how", "does", "with", "this", "that", "from"}
-        keywords = [t for t in tokens if t not in stopwords]
+        stopwords = {
+            "what", "which", "where", "when", "how", "does", "with", "this", "that", "from",
+            "the", "and", "are", "is", "in", "of", "to", "a", "an", "for", "on", "as", "by",
+            "at", "or", "be", "all", "use", "used", "paper", "papers", "between"
+        }
+        seen_kw = set()
+        keywords = []
+        for t in tokens:
+            if t not in stopwords and t not in seen_kw:
+                seen_kw.add(t)
+                keywords.append(t)
+
         if not keywords:
             keywords = tokens[:5]
 
@@ -162,7 +172,7 @@ class VectorStoreService:
         if paper_id_filter:
             stmt = stmt.where(Chunk.paper_id == paper_id_filter)
 
-        conditions = [Chunk.text.ilike(f"%{kw}%") for kw in keywords[:10]]
+        conditions = [Chunk.text.ilike(f"%{kw}%") for kw in keywords[:15]]
         if conditions:
             stmt = stmt.where(or_(*conditions))
 

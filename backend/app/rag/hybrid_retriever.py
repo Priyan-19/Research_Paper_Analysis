@@ -1,4 +1,5 @@
 import asyncio
+from collections import defaultdict
 from typing import List, Dict, Any, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,7 +32,7 @@ class HybridRetriever:
         paper_id: Optional[str] = None,
         top_k: int = 10,
         vector_weight: float = 1.0,
-        bm25_weight: float = 0.8,
+        bm25_weight: float = 1.0,
         graph_weight: float = 1.0,
         rrf_k: int = 60,
         enable_reranking: bool = True
@@ -46,28 +47,31 @@ class HybridRetriever:
             f"(top_k={top_k}, v_weight={vector_weight}, b_weight={bm25_weight}, g_weight={graph_weight})"
         )
 
-        # 1. Execute Tri-Hybrid Retrieval Concurrently
-        raw_v, raw_b, raw_g = await asyncio.gather(
-            VectorStoreService.search_vector_similarity(
-                db=db,
-                query_text=query,
-                top_k=top_k * 2,
-                paper_id_filter=paper_id
-            ),
-            VectorStoreService.search_lexical_bm25(
-                db=db,
-                query_text=query,
-                top_k=top_k * 2,
-                paper_id_filter=paper_id
-            ),
-            GraphRetriever.search_graph(
-                query=query,
-                paper_id=paper_id,
-                top_k=top_k * 2,
-                max_depth=2
-            ),
-            return_exceptions=True
+        # 1. Execute Retrieval: Graph (Neo4j) concurrently with Dense Vector (Postgres),
+        # followed by Lexical BM25 on Postgres to prevent SQLAlchemy concurrent session connection errors.
+        vector_coro = VectorStoreService.search_vector_similarity(
+            db=db,
+            query_text=query,
+            top_k=top_k * 2,
+            paper_id_filter=paper_id
         )
+        graph_coro = GraphRetriever.search_graph(
+            query=query,
+            paper_id=paper_id,
+            top_k=top_k * 2,
+            max_depth=2
+        )
+        raw_v, raw_g = await asyncio.gather(vector_coro, graph_coro, return_exceptions=True)
+
+        try:
+            raw_b = await VectorStoreService.search_lexical_bm25(
+                db=db,
+                query_text=query,
+                top_k=top_k * 2,
+                paper_id_filter=paper_id
+            )
+        except Exception as e:
+            raw_b = e
 
         vector_results: List[VectorSearchResult] = raw_v if isinstance(raw_v, list) else []
         if isinstance(raw_v, Exception):
@@ -98,8 +102,32 @@ class HybridRetriever:
         if enable_reranking and len(hybrid_items) > 1:
             hybrid_items = cls.rerank_candidate_passages(query=query, items=hybrid_items)
 
-        # Slice to requested top_k
-        top_hybrid_items = hybrid_items[:top_k]
+        # Slice to requested top_k with multi-paper balance if multiple distinct papers are found
+        distinct_papers = {item.paper_id for item in hybrid_items if item.paper_id}
+        if len(distinct_papers) > 1 and not paper_id:
+            selected_items: List[HybridSearchResultItem] = []
+            per_paper_count: Dict[str, int] = defaultdict(int)
+            max_per_paper = max(2, top_k // len(distinct_papers) + 1)
+
+            # Pass 1: Gather top items from each distinct paper up to max_per_paper
+            for item in hybrid_items:
+                pid = item.paper_id or "unknown"
+                if per_paper_count[pid] < max_per_paper:
+                    selected_items.append(item)
+                    per_paper_count[pid] += 1
+                if len(selected_items) >= top_k:
+                    break
+
+            # Pass 2: Fill remaining slots by highest RRF rank
+            if len(selected_items) < top_k:
+                for item in hybrid_items:
+                    if item not in selected_items:
+                        selected_items.append(item)
+                    if len(selected_items) >= top_k:
+                        break
+            top_hybrid_items = selected_items
+        else:
+            top_hybrid_items = hybrid_items[:top_k]
 
         # 4. Synthesize Unified Hybrid Context
         unified_context = cls.build_unified_hybrid_context(
@@ -122,7 +150,7 @@ class HybridRetriever:
         bm25_results: List[VectorSearchResult] = None,
         graph_triples: List[GraphTripleItem] = None,
         vector_weight: float = 1.0,
-        bm25_weight: float = 0.8,
+        bm25_weight: float = 1.0,
         graph_weight: float = 1.0,
         rrf_k: int = 60
     ) -> List[HybridSearchResultItem]:

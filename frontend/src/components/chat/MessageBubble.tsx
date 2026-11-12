@@ -39,7 +39,7 @@ export function MessageBubble({ message, onRegenerate, onEditSubmit }: MessageBu
       <div className="prose prose-stone dark:prose-invert max-w-none font-serif text-[15px] leading-relaxed">
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkMath]}
-          rehypePlugins={[rehypeKatex, rehypeHighlight]}
+          rehypePlugins={[[rehypeKatex, { throwOnError: false }], rehypeHighlight]}
           components={{
             // Custom Code Block with Copy Button
             code({ node, inline, className, children, ...props }: any) {

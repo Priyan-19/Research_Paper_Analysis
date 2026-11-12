@@ -1,3 +1,4 @@
+import re
 import time
 from typing import List, Dict, Any, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -41,11 +42,17 @@ class GroundedChatService:
         raw_items: List[Any] = []
 
         # Step 1: Unified Tri-Hybrid Retrieval (Vector pgvector + BM25 Lexical + Neo4j Graph with RRF)
+        effective_top_k = request.top_k
+        comp_terms = {"compare", "comparison", "both", "common", "difference", "differences", "versus", "vs", "share"}
+        query_words = set(re.findall(r'\b\w+\b', request.query.lower()))
+        if comp_terms.intersection(query_words):
+            effective_top_k = max(request.top_k, 8)
+
         hybrid_res = await HybridRetriever.search_hybrid(
             db=db,
             query=request.query,
             paper_id=request.paper_id,
-            top_k=request.top_k
+            top_k=effective_top_k
         )
         retrieved_context_str = hybrid_res.unified_hybrid_context
         raw_items = hybrid_res.results

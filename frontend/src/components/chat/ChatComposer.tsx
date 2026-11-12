@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ArrowUp, Square, BookOpen, Sparkles } from "lucide-react";
+import { ArrowUp, Square, BookOpen } from "lucide-react";
 import { useChatStore } from "../../store/useChatStore";
 import { useQuery } from "@tanstack/react-query";
 import { fetchPapers } from "../../api/papers";
-import { cn } from "../../lib/utils";
 
 interface ChatComposerProps {
   onSendMessage: (query: string) => void;
@@ -79,18 +78,9 @@ export function ChatComposer({
           />
         </div>
 
-        {/* Bottom Toolbar: Mode pills + Paper Scope on Left, Char Count + Send Button on Right */}
+        {/* Bottom Toolbar: Paper Scope on Left, Char Count + Send Button on Right */}
         <div className="flex items-center justify-between gap-3 px-3.5 py-2.5 border-t border-parchment-outline-variant/40 bg-parchment-container-low/40 dark:bg-darkpaper-container/30">
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Fixed Hybrid Retrieval Mode Pill */}
-            <div
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-parchment-container-lowest dark:bg-darkpaper-container border border-parchment-outline-variant/60 text-[11px] font-serif font-medium text-parchment-primary dark:text-darkpaper-primary"
-              title="Grounded Hybrid Retrieval: Dense Vector pgvector + Neo4j Knowledge Graph"
-            >
-              <Sparkles className="w-3 h-3 text-parchment-secondary" />
-              <span>Hybrid RAG</span>
-            </div>
-
             {/* Paper Scope Selector */}
             <div className="flex items-center gap-1.5 px-2 py-1 bg-parchment-container-lowest dark:bg-darkpaper-container border border-parchment-outline-variant/60 text-xs font-serif text-parchment-secondary">
               <BookOpen className="w-3 h-3 text-parchment-secondary flex-shrink-0" />

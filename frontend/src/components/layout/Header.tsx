@@ -4,10 +4,7 @@ import { useChatStore } from "../../store/useChatStore";
 import {
   PanelLeft,
   PanelRight,
-  Sparkles,
-  SquarePen,
-  Layers,
-  Network
+  SquarePen
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "../../lib/utils";
@@ -78,15 +75,6 @@ export function Header() {
 
       {/* Right: Hybrid RAG Fixed Indicator + Sources Drawer Button */}
       <div className="flex items-center gap-2.5 flex-shrink-0">
-        {/* Fixed Hybrid Retrieval Mode Indicator */}
-        <div
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-serif text-parchment-primary dark:text-darkpaper-primary bg-parchment-container/50 border border-parchment-outline-variant/60"
-          title="Unified Hybrid Retrieval: PostgreSQL pgvector + Neo4j Knowledge Graph with RRF"
-        >
-          <Sparkles className="w-3 h-3 text-parchment-secondary flex-shrink-0" />
-          <span className="font-medium">Hybrid RAG</span>
-        </div>
-
         {/* Evidence Sources Button with Count Badge */}
         <button
           onClick={handleToggleSources}

@@ -51,7 +51,7 @@ export function PapersTab({ sources, highlightTag }: PapersTabProps) {
                 </Badge>
               </div>
 
-              {source.score !== undefined && (
+              {typeof source.score === "number" && !isNaN(source.score) && (
                 <span className="text-[10px] font-mono text-parchment-secondary flex items-center gap-1">
                   <Sparkles className="w-2.5 h-2.5" />
                   <span>Score: {source.score.toFixed(3)}</span>

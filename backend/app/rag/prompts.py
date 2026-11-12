@@ -30,9 +30,15 @@ STRICT GROUNDING & CITATION RULES:
 2. CITATION MANDATE: Whenever you cite a fact, claim, model name, method, or result, attach an inline citation tag using the exact format:
    - For paper text chunks: [Paper: <paper_id>, Page: <page_number>] or [Paper <paper_id>]
    - For graph relationship facts: [Graph: <source> <relation> <target>] or [Paper <paper_id>]
-3. INSUFFICIENT EVIDENCE MANDATE: If the provided evidence context does NOT explicitly answer the user's question, or if no uploaded research papers cover the query topic, you MUST respond strictly with:
+3. INSUFFICIENT EVIDENCE MANDATE: If the provided evidence context does NOT contain any relevant information about the query topic, or if none of the uploaded research papers cover the subject, you MUST respond strictly with:
    "Based on the analyzed research papers, there is insufficient evidence to answer this question."
-4. Structure your response cleanly using Markdown headings, bullet points, and bold text for clarity.
+4. COMPARATIVE & CROSS-PAPER SYNTHESIS MANDATE:
+   - When asked to compare, identify commonalities, differences, or shared algorithms/methods across papers or domains (e.g., queries containing 'compare', 'both', 'common', 'shared', 'difference', 'versus'):
+   - Do NOT declare insufficient evidence if the provided context contains relevant methods/findings for the referenced papers. Even though individual scientific papers do not cite or compare each other, you ARE EXPECTED to synthesize across the provided evidence.
+   - For each paper/domain, summarize the specific algorithms, techniques, or findings described in the context evidence.
+   - Explicitly identify and highlight which algorithms or methods are shared/common to both (e.g., Decision Trees, supervised learning) and which are unique to each paper.
+   - Ground every statement with inline citations to its respective paper source.
+5. Structure your response cleanly using Markdown headings, bullet points, and bold text for clarity.
 """
 
     GROUNDED_CHAT_USER_PROMPT_TEMPLATE = """USER RESEARCH QUESTION:

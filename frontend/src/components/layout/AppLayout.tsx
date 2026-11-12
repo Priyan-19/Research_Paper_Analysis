@@ -4,6 +4,7 @@ import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { SourcesPanel } from "../sources/SourcesPanel";
 import { ToastContainer } from "../ui/ToastContainer";
+import { ErrorBoundary } from "../ui/ErrorBoundary";
 import { useChatStore } from "../../store/useChatStore";
 import { useUIStore } from "../../store/useUIStore";
 import { useSettingsStore, applyThemeClass } from "../../store/useSettingsStore";
@@ -60,10 +61,14 @@ export function AppLayout() {
         <Header />
         <main className="flex-1 overflow-hidden relative flex">
           <div className="flex-1 flex flex-col h-full overflow-y-auto">
-            <Outlet />
+            <ErrorBoundary fallbackTitle="Chat View Render Notice">
+              <Outlet />
+            </ErrorBoundary>
           </div>
           {/* Slide-over Right Sources & Evidence Inspector */}
-          <SourcesPanel />
+          <ErrorBoundary fallbackTitle="Evidence Inspector Notice">
+            <SourcesPanel />
+          </ErrorBoundary>
         </main>
       </div>
 

@@ -1,10 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ArrowUp, Square, BookOpen } from "lucide-react";
 import { useChatStore } from "../../store/useChatStore";
-import { SearchMode } from "../../types/api";
 import { useQuery } from "@tanstack/react-query";
 import { fetchPapers } from "../../api/papers";
-import { cn } from "../../lib/utils";
 
 interface ChatComposerProps {
   onSendMessage: (query: string) => void;
@@ -21,7 +19,7 @@ export function ChatComposer({
 }: ChatComposerProps) {
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { searchMode, setSearchMode, paperScope, setPaperScope } = useChatStore();
+  const { paperScope, setPaperScope } = useChatStore();
 
   // Fetch papers for the Scope filter dropdown
   const { data: papersData } = useQuery({
@@ -80,28 +78,9 @@ export function ChatComposer({
           />
         </div>
 
-        {/* Bottom Toolbar: Mode pills + Paper Scope on Left, Char Count + Send Button on Right */}
+        {/* Bottom Toolbar: Paper Scope on Left, Char Count + Send Button on Right */}
         <div className="flex items-center justify-between gap-3 px-3.5 py-2.5 border-t border-parchment-outline-variant/40 bg-parchment-container-low/40 dark:bg-darkpaper-container/30">
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Mode Selector */}
-            <div className="inline-flex border border-parchment-outline-variant/60 bg-parchment-container-lowest dark:bg-darkpaper-container text-[11px] font-serif">
-              {(["hybrid", "vector", "graph"] as SearchMode[]).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => setSearchMode(mode)}
-                  className={cn(
-                    "px-2.5 py-1 capitalize transition-colors font-medium cursor-pointer",
-                    searchMode === mode
-                      ? "bg-parchment-primary text-parchment-on-primary dark:bg-darkpaper-primary dark:text-darkpaper-on-primary"
-                      : "text-parchment-on-surface-variant hover:bg-parchment-container hover:text-parchment-primary dark:hover:bg-darkpaper-container-high"
-                  )}
-                >
-                  {mode}
-                </button>
-              ))}
-            </div>
-
             {/* Paper Scope Selector */}
             <div className="flex items-center gap-1.5 px-2 py-1 bg-parchment-container-lowest dark:bg-darkpaper-container border border-parchment-outline-variant/60 text-xs font-serif text-parchment-secondary">
               <BookOpen className="w-3 h-3 text-parchment-secondary flex-shrink-0" />

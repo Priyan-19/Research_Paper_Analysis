@@ -35,7 +35,7 @@ export function GraphTab({ sources }: GraphTabProps) {
         >
           <div className="flex items-center justify-between gap-2 mb-2">
             <Badge variant="graph">Neo4j Relational Triple</Badge>
-            {source.score !== undefined && (
+            {typeof source.score === "number" && !isNaN(source.score) && (
               <span className="text-[10px] font-mono text-parchment-secondary flex items-center gap-1">
                 <Sparkles className="w-2.5 h-2.5" />
                 <span>RRF Rank: {source.score.toFixed(3)}</span>

@@ -40,81 +40,30 @@ class GroundedChatService:
         retrieved_sources: List[Dict[str, Any]] = []
         raw_items: List[Any] = []
 
-        # Step 1: Execute Retrieval Strategy Based on Search Mode
-        if request.search_mode == SearchModeEnum.HYBRID:
-            hybrid_res = await HybridRetriever.search_hybrid(
-                db=db,
-                query=request.query,
-                paper_id=request.paper_id,
-                top_k=request.top_k
-            )
-            retrieved_context_str = hybrid_res.unified_hybrid_context
-            raw_items = hybrid_res.results
-            for idx, item in enumerate(hybrid_res.results, start=1):
-                is_graph = item.item_type == "graph_triple"
-                retrieved_sources.append({
-                    "source_index": idx,
-                    "paper_id": item.paper_id or ("graph_001" if is_graph else "doc_001"),
-                    "paper_title": item.metadata.get("paper_title") or ("Knowledge Graph Network" if is_graph else (item.paper_id or "Research Paper")),
-                    "page_number": item.metadata.get("page_number"),
-                    "section_name": item.metadata.get("section_name") or ("Knowledge Graph" if is_graph else None),
-                    "text": item.content,
-                    "source_type": "graph" if is_graph else "hybrid",
-                    "score": getattr(item, "rrf_score", None),
-                    "relationship": item.metadata.get("relation_type"),
-                    "source_entity": item.metadata.get("source_entity"),
-                    "target_entity": item.metadata.get("target_entity"),
-                })
-
-        elif request.search_mode == SearchModeEnum.VECTOR:
-            vector_chunks = await VectorStoreService.search_vector_similarity(
-                db=db,
-                query_text=request.query,
-                top_k=request.top_k,
-                paper_id_filter=request.paper_id
-            )
-            raw_items = vector_chunks
-            context_lines = ["=== RETRIEVED VECTOR DOCUMENT PASSAGES ==="]
-            for idx, c in enumerate(vector_chunks, start=1):
-                context_lines.append(
-                    f"\n[Source {idx} | Paper: {c.paper_id} | Page {c.page_number} | Section: {c.section_name}]\n{c.text}"
-                )
-                retrieved_sources.append({
-                    "source_index": idx,
-                    "paper_id": c.paper_id,
-                    "paper_title": getattr(c, "paper_title", None) or c.paper_id,
-                    "page_number": c.page_number,
-                    "section_name": c.section_name,
-                    "text": c.text,
-                    "chunk_id": c.chunk_id,
-                    "source_type": "vector",
-                    "score": getattr(c, "similarity_score", None),
-                })
-            retrieved_context_str = "\n".join(context_lines)
-
-        elif request.search_mode == SearchModeEnum.GRAPH:
-            graph_res = await GraphRetriever.search_graph(
-                query=request.query,
-                paper_id=request.paper_id,
-                top_k=request.top_k,
-                max_depth=2
-            )
-            retrieved_context_str = graph_res.formatted_graph_context
-            raw_items = graph_res.triples
-            for idx, t in enumerate(graph_res.triples, start=1):
-                retrieved_sources.append({
-                    "source_index": idx,
-                    "paper_id": t.paper_id or "graph_001",
-                    "paper_title": t.paper_id or "Graph Knowledge Network",
-                    "page_number": None,
-                    "section_name": "Knowledge Graph",
-                    "text": f"({t.source}) --[{t.relation_type}]--> ({t.target})",
-                    "source_type": "graph",
-                    "relationship": t.relation_type,
-                    "source_entity": t.source,
-                    "target_entity": t.target,
-                    "score": getattr(t, "score", None),
-                })
+        # Step 1: Unified Tri-Hybrid Retrieval (Vector pgvector + BM25 Lexical + Neo4j Graph with RRF)
+        hybrid_res = await HybridRetriever.search_hybrid(
+            db=db,
+            query=request.query,
+            paper_id=request.paper_id,
+            top_k=request.top_k
+        )
+        retrieved_context_str = hybrid_res.unified_hybrid_context
+        raw_items = hybrid_res.results
+        for idx, item in enumerate(hybrid_res.results, start=1):
+            is_graph = item.item_type == "graph_triple"
+            retrieved_sources.append({
+                "source_index": idx,
+                "paper_id": item.paper_id or ("graph_001" if is_graph else "doc_001"),
+                "paper_title": item.metadata.get("paper_title") or ("Knowledge Graph Network" if is_graph else (item.paper_id or "Research Paper")),
+                "page_number": item.metadata.get("page_number"),
+                "section_name": item.metadata.get("section_name") or ("Knowledge Graph" if is_graph else None),
+                "text": item.content,
+                "source_type": "graph" if is_graph else "hybrid",
+                "score": getattr(item, "rrf_score", None),
+                "relationship": item.metadata.get("relation_type"),
+                "source_entity": item.metadata.get("source_entity"),
+                "target_entity": item.metadata.get("target_entity"),
+            })
 
         # Step 2: Evidence Sufficiency Guardrail Check
         if not raw_items or CitationGuard.is_insufficient_evidence("", raw_items):
@@ -124,7 +73,7 @@ class GroundedChatService:
             return ChatResponse(
                 query=request.query,
                 answer=fallback_ans,
-                search_mode=request.search_mode.value,
+                search_mode="hybrid",
                 total_citations=0,
                 citations=[],
                 insufficient_evidence=True,
@@ -192,7 +141,7 @@ class GroundedChatService:
         return ChatResponse(
             query=request.query,
             answer=answer_text,
-            search_mode=request.search_mode.value,
+            search_mode="hybrid",
             total_citations=len(citations),
             citations=citations,
             insufficient_evidence=is_insufficient,
